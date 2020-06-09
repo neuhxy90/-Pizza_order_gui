@@ -37,8 +37,8 @@ class Login:
         #   CANVAS  for image
         sf.canvas=Canvas(sf.f,bg='PeachPuff',bd=-2)
         sf.canvas.place(x=0,y=36,width=1376,height=705)  # previous height=125 
-        sf.img=ImageTk.PhotoImage(Image.open('img/background_.jpg'))
-        sf.canvas.create_image(681,405,image=sf.img)
+        # sf.img=ImageTk.PhotoImage(Image.open('img/background_.jpg'))
+        # sf.canvas.create_image(681,405,image=sf.img)
         sf.l.append(sf.canvas)
    
         #   USERNAME label
