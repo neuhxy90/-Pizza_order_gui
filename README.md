@@ -1,2 +1,2 @@
 # Pizza
-A Pizza order GUI program
+A Pizza order GUI program.
