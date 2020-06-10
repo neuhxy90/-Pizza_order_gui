@@ -152,13 +152,11 @@ class Main:
         self.f = Frame(self.scr, bg='white')
         self.f.place(x=0, y=0, width=WIDTH, height=HEIGHT)
 
-        # 默认进入登录页面
-        self.login()
-
         # 初始化购物车内Pizza个数
         self.ITEMS = 0
         self.TOTAL = 0
-        
+        # 默认进入登录页面
+        self.login()
         # 窗体主函数运行
         self.scr.mainloop()
 
@@ -174,11 +172,8 @@ class Main:
         try:
             self.flush()
         except:
-            try:
-                self.flush()
-            except:
-                pass
-        self.f.config(bg='medium spring green')
+            pass
+        self.f.config(bg=COLOR['BACKGROUND'])
 
         #   CANVAS  for image
         self.canvas = Canvas(self.f, bg=COLOR['BACKGROUND'], bd=-2)
@@ -234,11 +229,8 @@ class Main:
         try:
             self.flush()
         except:
-            try:
-                self.flush()
-            except:
-                pass
-        self.f.config(bg='medium spring green')
+            pass
+        self.f.config(bg=COLOR['BACKGROUND'])
 
         #   CANVAS  for image
         self.canvas = Canvas(self.f, bg=COLOR['BACKGROUND'], bd=-2)
@@ -246,7 +238,7 @@ class Main:
         self.canvas.place(x=0, y=0, width=WIDTH, height=HEIGHT)
         # self.img=ImageTk.PhotoImage(Image.open('img/background.jpg'))
         # self.canvas.create_image(681,405,image=self.img)
-        # self.l.append(self.canvas)
+        self.l.append(self.canvas)
 
         #   USERNAME label
         self.title = Label(self.f, bg=COLOR['BACKGROUND'], text='Sign up ' + TITLE, padx=10, anchor='center', font=('Georgia 14 bold'))
@@ -585,21 +577,39 @@ class Main:
 
     def logout(self):
         ''' 注销 '''
-        # self.head.destroy()
+        self.head.destroy()
         self.login()
 
     def create_header(self):
         ''' 创建固定头部 '''
+        self.f = Frame(self.scr, relief=FLAT, bd=-2)
+        self.f.place(x=0, y=60)
+        ''' PARENT frame will <<NOT>> be destroyed '''
+        self.canvas = Canvas(self.f, bd=-2)
+        ''' canvas will also <<NOT>> be destroyed '''
+        self.frame = Frame(self.canvas, bd=-2, bg='white')
+        self.myscrollbar = Scrollbar(
+            self.f, orient=VERTICAL, command=self.canvas.yview)  # SCROLL BAR   ####
+        self.canvas.configure(yscrollcommand=self.myscrollbar.set)
+        self.myscrollbar.pack(side=RIGHT, fill=Y)
+
+        self.canvas.pack(side=LEFT)
+        self.canvas.create_window((0, 0), window=self.frame)
+        self.frame.bind("<Configure>", self.myfunction)
+
         # 建立顶部菜单栏
         self.head = Canvas(self.scr, bd=-2, bg='white')  # head canvas ######
         self.head.place(x=0, y=0, width=WIDTH, height=59)
         self.l.append(self.head)
 
         # WELCOME LABEL ##
-        self.wel = Label(self.head, text='Welcome, '+self.NAME, fg='red',
-                         bg='white', font=('Serif 12 bold'))  
+        self.wel = Label(self.head, 
+                    text='Welcome, '+self.NAME, 
+                    fg='red',
+                    bg='white', 
+                    font=('Serif 12 bold'))  
         
-        self.wel.place(x=6, y=4, width=200, height=50)
+        self.wel.place(x=6, y=4, width=200, height=44)
         self.wel.bind('<Enter>', partial(self.entry, self.wel, 'red'))
         self.wel.bind('<Leave>', partial(self.exit_, self.wel, 'white'))
         self.l.append(self.wel)
@@ -614,9 +624,9 @@ class Main:
         # self.pizza_logo = PhotoImage(
         #     file='img/pizza_logo.png')  # pizza logo  ##
         # self.head.create_image(460+20, 29, image=self.pizza_logo)
-        self.pizza_label = Label(self.head, text='Regular pizzas', bg='red', fg='snow', padx=10, font=('Helvetica 12 bold'))
-        self.pizza_label.place(x=423+20, y=8, width=150, height=44)
-        self.pizza_label.bind('<Button-1>', lambda val='1': self.create_order('1'))
+        self.pizza_label = Label(self.head, text='Regular pizzas', bg='red', fg='snow', font=('Helvetica 12 bold'))
+        self.pizza_label.place(x=423+20, y=4, width=150, height=44)
+        self.pizza_label.bind('<Button-1>', lambda val='1': self.show_regular_pizzas())
         self.pizza_label.bind('<Enter>', partial(self.entryP, self.pizza_label, 'coral'))
         self.pizza_label.bind('<Leave>', partial(self.exitP, self.pizza_label, 'red'))
         self.l.append(self.pizza_label)
@@ -625,8 +635,8 @@ class Main:
 
         # 精品 Pizza
         self.meals_label = Label(self.scr, text='Gourmet pizzas', bg='red', fg='snow', padx=10, font=('Helvetica 12 bold'))
-        self.meals_label.place(x=695+20, y=8, width=150, height=44)
-        self.meals_label.bind('<Button-1>', lambda val='1': self.show_gourmet_pizzas('1'))
+        self.meals_label.place(x=695+20, y=4, width=150, height=44)
+        self.meals_label.bind('<Button-1>', lambda val='1': self.show_gourmet_pizzas())
         self.meals_label.bind('<Enter>', partial(self.entryM, self.meals_label, 'coral'))
         self.meals_label.bind('<Leave>', partial(self.exitM, self.meals_label, 'red'))
         self.l.append(self.meals_label)
@@ -667,36 +677,11 @@ class Main:
         self.tl.place(x=1240, y=8, width=95, height=31)
         self.l.append(self.tl)
 
-        ''' self.f is our PARENT FRAME '''
-        self.f = Frame(self.scr, relief=FLAT, width=690, height=900, bd=-2)
-        self.f.place(x=0, y=60)
-        ''' PARENT frame will <<NOT>> be destroyed '''
-        self.canvas = Canvas(self.f, bd=-2)
-        ''' canvas will also <<NOT>> be destroyed '''
-        self.frame = Frame(self.canvas, bd=-2, bg='white')
-        self.myscrollbar = Scrollbar(
-            self.f, orient=VERTICAL, command=self.canvas.yview)  # SCROLL BAR   ####
-        self.canvas.configure(yscrollcommand=self.myscrollbar.set)
-        self.myscrollbar.pack(side=RIGHT, fill=Y)
-
-        self.canvas.pack(side=LEFT)
-        self.canvas.create_window((0, 0), window=self.frame)
-        self.frame.bind("<Configure>", self.myfunction)
+        
 
         self.__labels__ = ['0']  # list to store label objects ####
 
-        #############   specifications of a 'CANVAS'    #############
-        self.cwidth = PIZZAS['width']+1  # canvas width
-        self.cheight = PIZZAS['height']+1  # canvas height
-        self.cbg = 'snow'  # canvas bg color
-        self.ncolor = 'Dodgerblue2'  # name color
-        self.nfont = ("Helvetica 15 normal")  # name font description
-        self.dcolor = 'dim gray'  # desciption color
-        self.dfont = ("Helvetica 10 normal")  # descr. font description
-        self.sizecolor = 'snow'
-        self.sizefont = ("Helvetica 12 normal")
-        self.rec_color = 'snow4'
-        self.cbg2 = 'firebrick1'
+
 
 
     def create_order(self, val):
@@ -708,6 +693,22 @@ class Main:
         ''' 显示普通 Pizza '''
         self.flush()
         self.create_header()
+
+        # specifications of a 'CANVAS'
+        self.cwidth = PIZZAS['width']+1  # canvas width
+        self.cheight = PIZZAS['height']+1  # canvas height
+
+        self.cbg = 'snow'  # canvas bg color
+        self.ncolor = 'Dodgerblue2'  # name color
+        self.nfont = ("Helvetica 15 normal")  # name font description
+        self.dcolor = 'dim gray'  # desciption color
+        self.dfont = ("Helvetica 10 normal")  # descr. font description
+        self.sizecolor = 'snow'
+        self.sizefont = ("Helvetica 12 normal")
+        self.rec_color = 'snow4'
+        self.cbg2 = 'firebrick1'
+
+
         self.frame.config(width=WIDTH-15, height=HEIGHT)
         self.canva = Canvas(self.frame, bd=-2, bg='white',
                             width=WIDTH-15, height=HEIGHT, highlightthickness=1)
@@ -764,23 +765,39 @@ class Main:
         #         self.__labels__[int(d)].config(
         #             text='REMOVE', fg='SpringGreen2')
 
-        self.scr.mainloop()
-
-
-    def show_gourmet_pizzas(self, val):
+        
+    def show_gourmet_pizzas(self):
         ''' 点击进入精品 Pizza '''
         self.flush()
         self.create_header()
-        self.frame.config(width=WIDTH-15, height=HEIGHT)
+
+        # specifications of a 'CANVAS'
+        self.cwidth = PIZZAS['width']+1  # canvas width
+        self.cheight = PIZZAS['height']+1  # canvas height
+
+        self.cbg = 'snow'  # canvas bg color
+        self.ncolor = 'Dodgerblue2'  # name color
+        self.nfont = ("Helvetica 15 normal")  # name font description
+        self.dcolor = 'dim gray'  # desciption color
+        self.dfont = ("Helvetica 10 normal")  # descr. font description
+        self.sizecolor = 'snow'
+        self.sizefont = ("Helvetica 12 normal")
+        self.rec_color = 'snow4'
+        self.cbg2 = 'firebrick1'
+
+        mh = 250           # 定义精品 pizza 的高度
+        hh = mh * (len(PIZZAS['Gourmet pizzas']['list'])+1)
+
+        self.frame.config(width=WIDTH-15, height=hh)
         self.canva = Canvas(self.frame, bd=-2, bg='white',
-                            width=WIDTH-15, height=HEIGHT, highlightthickness=1)
+                            width=WIDTH-15, height=hh, highlightthickness=1)
+
         self.canva.place(x=0, y=0)
         self.imgs = []
         self.ms = []
-        mh = 250           # 定义精品 pizza 的高度
         # meal 1 ##
         # 显示精品 pizza 图片
-        item = PIZZAS['Gourmet pizzas']['list'][0]
+        # item = PIZZAS['Gourmet pizzas']['list'][0]
 
         for i,item in enumerate(PIZZAS['Gourmet pizzas']['list']):
             # 显示Pizza图片
@@ -811,6 +828,8 @@ class Main:
 
             Label(self.canva, text=PIZZAS['Gourmet pizzas']['price'], font=('Helvetica 18 bold'), bg='orange2',
                     fg='white').place(x=800, y=200+i*mh, width=50, height=35)
+
+        
 
 
         # for m in self.M:
