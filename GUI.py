@@ -616,7 +616,7 @@ class Main:
         # self.head.create_rectangle(5, 3, 106, 54, outline='red', fill='white')
 
         #   Logout button
-        self.logout_btn = Button(self.scr, text='Logout', bg=COLOR['WARNING'], command=self.logout)
+        self.logout_btn = Button(self.scr, text='Logout', relief='flat', font=('Serif 12 bold'), fg='snow', bg=COLOR['WARNING'], command=self.logout)
         self.logout_btn.place(x=200+20, y=4, width=90, height=44)
         self.l.append(self.logout_btn)
 
