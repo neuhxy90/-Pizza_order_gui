@@ -12,6 +12,7 @@ import smtplib  # for email
 from email.mime.text import MIMEText
 from email.header import Header
 import math
+from datetime import datetime
 
 # 定义主界面大小
 WIDTH = 1366
@@ -38,7 +39,7 @@ mail = {
 # 配置当前货币单位
 money = '$'
 # 定义所有的Pizzas数据
-pizzas = [
+pizzas_data = [
     {
         'id': 1,
         'name': 'Margherita',
@@ -136,11 +137,14 @@ pizzas = [
         'content': 'Spicy pepperoni, Italian sausage, succulent ham, seasoned ground beef and crispy bacon all piled onto classic marinara sauce and finished with cheesy mozzarella and a drizzle of BBQ sauce.'
     }
 ]
+
+
 # 定义购物车允许购买最多的Pizza个数
 max_cart_item = 5
 # 定义全部订单
 orders = []
-
+# 快递费
+delivery_fee = 10
 # 主程序初始化
 s = Tk()
 s.title(title)
@@ -153,16 +157,19 @@ class Pizza:
     '''
     Pizza 类
     '''
-    def __init__(self, id, name, img, price, content):
+    def __init__(self, id, name,type, img, price, content):
         self.id = id
         self.name = name
+        self.type = type
         self.img = img
         self.price = price
         self.content = content
     
     def get_pizza(self, key, value):
         ''' 根据条件查找pizza数据 '''
-        return [p for p in pizzas if p[key] == value]
+        keys = self.__dict__
+        print(keys)
+        return [p for p in pizzas if keys['p.{}'.format(key)] == value]
 
 
 
@@ -172,15 +179,32 @@ class Order:
     @param : 
     @return: 
     '''
+    def __init__(self, id, uid, items, house_no, street, city, pizzas_price, delivery_fee, total):
+        self.id = id                        # 订单ID
+        self.uid = uid                      # 客户ID
+        self.items = items                  # Pizza信息
+        self.house_no = house_no            # 房间号 
+        self.street = street                # 街道
+        self.city = city                    # 城市
+        self.pizzas_price = pizzas_price    # Pizza 总价
+        self.delivery_fee = delivery_fee    # 配送费
+        self.total = total                  # 订单总价
+
+
+
+class Item:
+    '''
+    @description: 
+    @param : 
+    @return: 
+    '''
     def __init__(self, id, uid, pizza, amount, price):
-        self.id = id
-        self.uid = uid
         self.pizza = pizza
         self.amount = amount
         self.price = price
 
-
-
+# 读取Pizza数据，转为Pizza对象
+pizzas = [Pizza(p['id'],p['name'],p['type'],p['img'],p['price'],p['content']) for p in pizzas_data]
 
 class Main:
     def __init__(self):
@@ -205,7 +229,11 @@ class Main:
         self.ITEMS = 0
         self.TOTAL = 0
         # 定义每个Pizza 购买数量，为购物车最终结算使用
-        self.user_cart = {p['id']: StringVar() for p in pizzas}
+        self.user_cart = {p.id: StringVar() for p in pizzas}
+        # 定义每一个
+        self.items = {p.id: None for p in pizzas}
+        # 定义结算页面的总价
+        self.total_price = None
         # self.ids = []
         # 初始默认都是0
         for uc in self.user_cart:
@@ -683,6 +711,19 @@ class Main:
         self.l.append(self.wel)
         # self.head.create_rectangle(5, 3, 106, 54, outline='red', fill='white')
 
+        # Orders
+        self.logout_btn = Button(
+            self.scr,
+            text='Orders',
+            relief=FLAT,
+            font=('Serif 12 bold'),
+            bg='snow',
+            fg=color['error'],
+            command=self.orders
+        )
+        self.logout_btn.place(x=535, y=4, width=90, height=44)
+        self.l.append(self.logout_btn)
+
         #   Logout button
         self.logout_btn = Button(
             self.scr,
@@ -693,7 +734,7 @@ class Main:
             fg=color['error'],
             command=self.logout
         )
-        self.logout_btn.place(x=535, y=4, width=90, height=44)
+        self.logout_btn.place(x=635, y=4, width=90, height=44)
         self.l.append(self.logout_btn)
 
         # self.head.create_oval(682-5+20, 9, 718-5+20, 51,
@@ -749,8 +790,8 @@ class Main:
         self.__labels__ = ['0']  # list to store label objects ####
 
     def get_pizza(self, key, value):
-        ''' 根据条件查找pizza数据 '''
-        return [p for p in pizzas if p[key] == value]
+        ''' 根据id查找pizza数据 '''
+        return [p for p in pizzas if p.id == value]
 
     def create_order(self, val):
         self.flush()
@@ -783,7 +824,7 @@ class Main:
         # self.regular_carts = [StringVar()]*len(pizzas['regular']['list'])
         # print(self.regular_carts)
         # 获取所有的普通 pizza 列表
-        regular_pizzas = [p for p in pizzas if p['type'] == 'regular']
+        regular_pizzas = [p for p in pizzas if p.type == 'regular']
         # 打印 普通 Pizza 列表
         for i, item in enumerate(regular_pizzas):
             # 初始化当前的id列表
@@ -814,11 +855,11 @@ class Main:
                 160, 20,
                 font=("Helvetica 15 normal"),
                 fill='Dodgerblue2',
-                text=item['name']
+                text=item.name
             )
 
             # Pizza 的图片
-            self.imgs.append(ImageTk.PhotoImage(Image.open(item['img'])))
+            self.imgs.append(ImageTk.PhotoImage(Image.open(item.img)))
             self.veg.create_image(160, 160, image=self.imgs[i])
 
             # Pizza 的描述
@@ -828,7 +869,7 @@ class Main:
                 anchor=CENTER,
                 font=("Helvetica 10 normal"),
                 fill='dim gray',
-                text=item['content']
+                text=item.content
             )
             self.l.append(self.veg)
 
@@ -849,7 +890,7 @@ class Main:
                 75, 40,
                 font=("Helvetica 32 bold"),
                 fill='snow',
-                text='{}{}'.format(money, item['price'])
+                text='{}{}'.format(money, item.price)
             )
 
             # 左侧的减号：点击后数量-1
@@ -864,19 +905,19 @@ class Main:
             self.minus.place(x=150, y=10, width=20, height=20)
             self.minus.bind(
                 "<Button-1>",
-                partial(self.minus_pizza, self.minus, item['id'])
+                partial(self.minus_pizza, self.minus, item.id)
             )
 
             # 数量，默认为0，单份不超过5个，总数也不能超过5个
             self.amount = Entry(
                 self.veg2,
                 bg='azure',
-                textvariable=self.user_cart.get(item['id']),
+                textvariable=self.user_cart.get(item.id),
                 relief=FLAT,
                 justify='center'
             )
             self.amount.place(x=175, y=10, width=75, height=20)
-            # self.carts[item['id']] = self.amount
+            # self.carts[item.id] = self.amount
             # 购物车商品默认为0
 
             # 右侧的加号：点击后数量+1
@@ -888,7 +929,7 @@ class Main:
                 text='+',
                 font=("Sans 12 bold"))
             self.plus.bind(
-                "<Button-1>", partial(self.plus_pizza, self.plus, item['id']))
+                "<Button-1>", partial(self.plus_pizza, self.plus, item.id))
             self.plus.place(x=255, y=10, width=20, height=20)
 
             # 加入购物车
@@ -902,7 +943,7 @@ class Main:
             )
             self.cartBtn.bind(
                 '<Button-1>',
-                partial(self.add_to_cart, self.cartBtn, item['id'])
+                partial(self.add_to_cart, self.cartBtn, item.id)
             )
             self.cartBtn.place(x=150, y=40, width=127, height=30)
             # self.__labels__.append(self.label1)
@@ -951,21 +992,24 @@ class Main:
         self.ITEMS = sum([int(self.user_cart.get(c).get())
                           for c in self.user_cart])
         self.TOTAL = sum([int(self.user_cart.get(
-            c).get()) * self.get_pizza('id', c)[0]['price'] for c in self.user_cart])
+            c).get()) * self.get_pizza('id', c)[0].price for c in self.user_cart])
 
         self.tl2.config(text=str(self.ITEMS))
         self.tl.config(text='{}{}{}'.format(
             'TOTAL=', 
             money, 
             self.TOTAL
-        ))  # total amount
+        ))  
+        # 更新购物车页面总价
+        self.total_price.config(text='{}{}'.format(money,self.TOTAL))
+        # total amount
 
     def show_gourmet_pizzas(self):
         ''' 点击进入精品 Pizza '''
         self.flush()
         self.create_header()
 
-        gourmet_pizzas = [p for p in pizzas if p['type'] == 'gourmet']
+        gourmet_pizzas = [p for p in pizzas if p.type == 'gourmet']
 
         mh = 250           # 定义精品 pizza 的高度
         hh = mh * (len(gourmet_pizzas)+1)
@@ -987,13 +1031,13 @@ class Main:
 
         for i, item in enumerate(gourmet_pizzas):
             # 显示Pizza图片
-            self.imgs.append(ImageTk.PhotoImage(Image.open(item['img'])))
+            self.imgs.append(ImageTk.PhotoImage(Image.open(item.img)))
             self.canva.create_image(300, 200+i*mh, image=self.imgs[i])
 
             # 显示精品 Pizza 的名称及介绍
             Label(
                 self.canva,
-                text=item['name'],
+                text=item.name,
                 font=('Sans 18 bold'),
                 justify='left',
                 bg='white'
@@ -1001,7 +1045,7 @@ class Main:
 
             Label(
                 self.canva,
-                text=item['content'],
+                text=item.content,
                 justify='left',
                 anchor='nw',
                 font=('Helvetica 12 normal'),
@@ -1013,7 +1057,7 @@ class Main:
 
             Label(
                 self.canva,
-                text='{}{}'.format(money, item['price']),
+                text='{}{}'.format(money, item.price),
                 font=('Helvetica 18 bold'),
                 bg='orange2',
                 fg='white'
@@ -1031,7 +1075,7 @@ class Main:
             minus.place(x=50+750, y=200+i*mh, width=20, height=20)
             minus.bind(
                 "<Button-1>",
-                partial(self.minus_pizza, minus, item['id'])
+                partial(self.minus_pizza, minus, item.id)
             )
 
             # 数量，默认为0，单份不超过5个，总数也不能超过5个
@@ -1039,12 +1083,11 @@ class Main:
                 self.canva,
                 bg='azure',
                 bd=2,
-                textvariable=self.user_cart.get(item['id']),
+                textvariable=self.user_cart.get(item.id),
                 relief=FLAT,
                 justify='center'
             )
             amount.place(x=75+750, y=200+i*mh, width=75, height=20)
-            # self.carts[item['id']] = self.amount
             # 购物车商品默认为0
 
             # 右侧的加号：点击后数量+1
@@ -1056,7 +1099,7 @@ class Main:
                 text='+',
                 font=("Sans 12 bold"))
             plus.bind(
-                "<Button-1>", partial(self.plus_pizza, plus, item['id']))
+                "<Button-1>", partial(self.plus_pizza, plus, item.id))
             plus.place(x=155+750, y=200+i*mh, width=20, height=20)
 
             # 加入购物车
@@ -1072,7 +1115,7 @@ class Main:
             self.ms[i].place(x=800, y=264+i*mh, width=160, height=33)
             self.ms[i].bind(
                 '<Button-1>',
-                partial(self.add_to_cart, self.ms[i], item['id'])
+                partial(self.add_to_cart, self.ms[i], item.id)
             )
 
 
@@ -1136,25 +1179,52 @@ class Main:
             14+435, 43, 360+440+25, 245, width=2, outline='deep sky blue')  # rectangle  ##
 
         # 订单资料
-        Label(self.frame, text='ORDER DETAILS', font=(
-            'Helvetica 11 bold'), bg='white', fg='grey19').place(x=1020, y=50)
-        Label(self.frame, text='Net Price', bg='white').place(
+        Label(
+            self.frame, 
+            text='ORDER DETAILS', 
+            font=(
+            'Helvetica 11 bold'), 
+            bg='white', fg='grey19'
+        ).place(x=1020, y=50)
+        Label(self.frame, text='Pizzas\' price', bg='white').place(
             x=936, y=110)  # TOTAL LABEL
         Label(self.frame, text='\u0024 '+str(self.TOTAL),
               bg='white').place(x=1084, y=110)
-        Label(self.frame, text='GST', bg='white').place(
+        Label(self.frame, text='Delivery fee', bg='white').place(
             x=936, y=150)  # GST LABEL
-        Label(self.frame, text='\u0024 '+str(math.ceil(0.18 *
-                                                       self.TOTAL)), bg='white').place(x=1084, y=150)
-        Label(self.frame, text='TOTAL', bg='turquoise1', font=(
-            'bold 10')).place(x=936, y=190)  # TOTAL LABEL
-        Label(self.frame, text=str(math.ceil(0.18*self.TOTAL)+self.TOTAL),
-              bg='white', font=('bold 10')).place(x=1084, y=190)
+        Label(
+            self.frame, 
+            text='{}{}'.format(money, 10),
+            bg='white').place(x=1084, y=150)
+        Label(
+            self.frame, 
+            text='TOTAL', 
+            bg='turquoise1', 
+            font=('bold 10')
+        ).place(x=936, y=190)  # TOTAL LABEL
+        Label(
+            self.frame, 
+            text=str(10+self.TOTAL),
+            bg='white', 
+            font=('bold 10')
+        ).place(x=1084, y=190)
         self.canva.create_rectangle(
-            894, 38, 1275, 245, width=2, outline='deep sky blue')  # rectangle  ##
+            894, 
+            38, 
+            1275, 
+            245, 
+            width=2, 
+            outline='deep sky blue'
+        )  # rectangle  ##
 
+        # 绘制一个红色的大框
         self.canva.create_rectangle(
-            50, 288, 900, 358, fill='brown3', outline='white', width=2)
+            50, 288, 950, 358, 
+            fill='brown3', 
+            outline='white', 
+            width=2
+        )
+
         Label(self.canva, text='YOUR CART DETAILS', font=('Sans 21 bold'),
               fg='snow', bg='brown3').place(x=60, y=295, width=300, height=55)
         # 订单详情的表头：名称，数量，总价
@@ -1162,14 +1232,14 @@ class Main:
             self.canva,
             text='Item',
             font=('Sans 17 bold'),
-            fg='gray53', bg='white'
+            fg='gray2', bg='white'
         ).place(x=100, y=370)
 
         Label(
             self.canva,
             text='Type',
             font=('Sans 17 bold'),
-            fg='gray53',
+            fg='gray2',
             bg='white'
         ).place(x=500, y=370)
 
@@ -1177,62 +1247,107 @@ class Main:
             self.canva,
             text='Amount',
             font=('Sans 17 bold'),
-            fg='gray53',
+            fg='gray2',
             bg='white'
         ).place(x=650, y=370)
 
         Label(
             self.canva,
             text='Price',
+            anchor='e',
             font=('Sans 17 bold'),
-            fg='gray53',
+            fg='gray2',
             bg='white'
-        ).place(x=760, y=370)
-
-        user_carts = {c: self.user_cart[c] for c in self.user_cart if int(
-            self.user_cart[c].get()) > 0}
+        ).place(x=830, y=370)
 
 
-        # first check for pizzas ################
-        # self.pizza_logo2 = PhotoImage(file='img/pizza_logo2.png')
-        # self.drinks_logo2 = PhotoImage(file='img/drinks_logo2.png')
-        # self.meals_logo2 = ImageTk.PhotoImage(
-        #     Image.open('img/meals_logo2.jpg'))
+        # 获取购物车中实际的条目
+        user_carts = {c: self.user_cart[c] for c in self.user_cart if int(self.user_cart[c].get()) > 0}
+
+
+        # 绘制直线
+        self.canva.create_line(
+            100, 415,           # 起始点坐标
+            900, 415,           # 结束点坐标
+            width = 2,
+            fill='gray2'
+        )
+
         # 方案2： 以标签绘制
         for i, c in enumerate(user_carts):
-            amount = int(self.user_cart[c].get())
-            print('当前id={}数量为{}'.format(c, amount))
+            a = int(self.user_cart[c].get())
+            print('当前id={}数量为{}'.format(c, a))
             item = self.get_pizza('id', c)[0]
             # 订单名称
             Label(
                 self.canva,
-                text=item['name'],
+                text=item.name,
                 font=('Sans 15 bold'),
                 bg='white',
                 fg='gray4'
-            ).place(x=100, y=430+60*i)
+            ).place(x=100, y=430+40*i)
 
             # 类型
             Label(
                 self.canva,
-                text=item['type'],
+                text=item.type,
+                bg='white',
                 font=('Helvetica 11 bold italic')
-            ).place(x=500, y=432+60*i)
+            ).place(x=500, y=432+40*i)
 
             # 数量
-            Label(
+            # 左侧的减号：点击后数量-1
+            minus = Button(
                 self.canva,
-                text=amount,
-                font=('Helvetica 11 bold italic')
-            ).place(x=650, y=432+60*i)
+                bg=color['warning'],
+                relief=FLAT,
+                fg='white',
+                text='-',
+                font=("sans 12 bold")
+            )
+            minus.place(x=650, y=432+40*i, width=20, height=20)
+            minus.bind(
+                "<Button-1>",
+                partial(self.minus_pizza, minus, item.id)
+            )
+            # 数量，默认为0，单份不超过5个，总数也不能超过5个
+            amount = Entry(
+                self.canva,
+                bg='azure',
+                bd=2,
+                textvariable=self.user_cart.get(item.id),
+                relief=FLAT,
+                justify='center'
+            )
+            amount.place(x=675, y=432+40*i, width=50, height=20)
+            # 右侧的加号：点击后数量+1
+            plus = Button(
+                self.canva,
+                bg=color['warning'],
+                fg='white',
+                relief=FLAT,
+                text='+',
+                font=("sans 12 bold"))
+            plus.place(x=730, y=432+40*i, width=20, height=20)
+            plus.bind(
+                "<Button-1>", 
+                partial(self.plus_pizza, plus, item.id)
+            )
 
             # 单项总价
             Label(
                 self.canva,
-                text='{}{}'.format(money, item['price']*amount),
+                anchor='e',
+                text='{}{}'.format(money, item.price*a),
                 font=('Times 15 bold'),
                 bg='white'
-            ).place(x=766, y=430+60*i)
+            ).place(x=850, y=430+40*i)
+
+        # 绘制直线
+        self.canva.create_line(100, 430+40*(i+1), 900, 430+40*(i+1),
+            width = 2,
+            fill='gray2'
+        )
 
         # 合计总价
         Label(
@@ -1241,32 +1356,41 @@ class Main:
             font=('Sans 17 bold'),
             bg='white',
             fg='gray2'
-        ).place(x=100, y=430+60*(i+1))
+        ).place(x=100, y=445+40*(i+1))
 
-        Label(
+        self.total_price = Label(
             self.canva,
+            anchor='e',
             text='{}{}'.format(money, self.TOTAL),
             font=('Sans 17 bold'),
             bg='white',
             fg='gray2'
-        ).place(x=760, y=430+60*(i+1))
+        )
+        self.total_price.place(x=830, y=445+40*(i+1))
 
         # 下单
         self.po = Label(
             self.canva,
             text='Place Order',
             bg='firebrick3',
-            fg='gold',
+            fg='snow',
             font=('Sans 15 bold')
         )
+        self.po.place(x=800, y=460+40*(i+2), width=150, height=50)
         self.po.bind(
             '<Button-1>',
             lambda val='1': self.place_order('1')
         )
-        self.po.place(x=1100, y=400, width=130, height=40)
 
     def place_order(self, val):
+        ''' 点击下单 '''
         if not len(self.he.get()) or not len(self.se.get()) or not len(self.ce.get()):
+
+            house_no = self.he.get()
+            street = self.se.get()
+            city = self.ce.get()
+            total = self.TOTAL + delivery_fee
+
             messagebox.showinfo(
                 'Missing Details', 'Please provide address details for successelful delivery of your order.')
             # self.payment_window('1')
@@ -1274,8 +1398,47 @@ class Main:
             message = 'Dear {}, your order has been successelfully placed.\nIt will be delivered to {} {} in under an hour.\nThank you !'.format(self.NAME, self.he.get(), self.se.get())
             messagebox.showinfo('Order placed', message)
 
+            # 获取购物车中实际的条目
+            user_carts = {c: self.user_cart[c] for c in self.user_cart if int(self.user_cart[c].get()) > 0}
+
+            # 创建订单
+            items = [Item(c, self.NAME, self.get_pizza(id, c)[0], int(user_carts[c].get()), user_carts[c]) for c in user_carts]
+            order = Order(len(orders)+1, self.NAME, items, house_no, street, city, self.TOTAL, delivery_fee, total)
+            orders.append(order)
+
+            # 清空购物车
+            for c in user_carts:
+                self.user_cart[c] = StringVar()
+
     def orders(self):
         ''' 查看所有订单信息 '''
+
+        # 方案1： 以表格绘制
+        columns = ['Item', 'Time', 'Amount', 'Price']
+        treeview = ttk.Treeview(self.canva, height=18,
+                                show="headings", columns=columns)  # 表格
+
+        treeview.place(x=100, y=430)
+
+        treeview.column('Item', width=300, anchor='w')
+        treeview.column('Time', width=200, anchor='center')
+        treeview.column('Amount', width=100, anchor='center')
+        treeview.column('Price', width=100, anchor='center')
+
+        for cc in columns:
+            treeview.heading(cc, text=cc)
+        
+        i = 0
+        treeview.pack(side=LEFT, fill=BOTH)
+        for i, c in enumerate(orders):
+            item = self.get_pizza('id', c)[0]
+            amount = int(self.user_cart[c].get())
+            price = amount * item.price
+            treeview.insert('', i, values=(
+                item.name, item.type, amount, price))
+        # 显示总价
+        treeview.insert('', i+1, values=('Total', '', self.ITEMS, self.TOTAL))
+
 
     def show_order(self):
         ''' 查看订单的具体信息 '''
@@ -1296,12 +1459,12 @@ class Main:
             treeview.heading(cc, text=cc)
 
         treeview.pack(side=LEFT, fill=BOTH)
-        for i, c in enumerate(user_carts):
+        for i, c in enumerate(orders):
             item = self.get_pizza('id', c)[0]
             amount = int(self.user_cart[c].get())
-            price = amount * item['price']
+            price = amount * item.price
             treeview.insert('', i, values=(
-                item['name'], item['type'], amount, price))
+                item.name, item.type, amount, price))
         # 显示总价
         treeview.insert('', i+1, values=('Total', '', self.ITEMS, self.TOTAL))
 
