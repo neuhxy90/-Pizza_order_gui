@@ -216,6 +216,7 @@ class Main:
         # 窗体主函数运行
         self.scr.mainloop()
 
+
     def login(self):
         '''
         [登录界面] 
@@ -950,10 +951,14 @@ class Main:
         self.ITEMS = sum([int(self.user_cart.get(c).get())
                           for c in self.user_cart])
         self.TOTAL = sum([int(self.user_cart.get(
-            c).get()) * self.get_pizza('id', id)[0]['price'] for c in self.user_cart])
+            c).get()) * self.get_pizza('id', c)[0]['price'] for c in self.user_cart])
+
         self.tl2.config(text=str(self.ITEMS))
         self.tl.config(text='{}{}{}'.format(
-            'TOTAL=', money, self.TOTAL))  # total amount
+            'TOTAL=', 
+            money, 
+            self.TOTAL
+        ))  # total amount
 
     def show_gourmet_pizzas(self):
         ''' 点击进入精品 Pizza '''
@@ -1070,10 +1075,6 @@ class Main:
                 partial(self.add_to_cart, self.ms[i], item['id'])
             )
 
-        # for m in self.M:
-        #     if self.M[m][0] == True:  # previously selected meal
-        #         self.__labels3__[int(m)].config(
-        #             text='REMOVE', bg='firebrick2', fg='black')
 
     def payment_window(self, val, event):  # Payment window
 
@@ -1270,8 +1271,8 @@ class Main:
                 'Missing Details', 'Please provide address details for successelful delivery of your order.')
             # self.payment_window('1')
         else:
-            messagebox.showinfo('Order placed', 'Dear '+self.NAME+' ,your order has been successelfully placed.\nIt will be delivered to ' +
-                                self.he.get()+','+self.se.get()+','+self.ce.get()+' in under an hour.\nThank you !')
+            message = 'Dear {}, your order has been successelfully placed.\nIt will be delivered to {} {} in under an hour.\nThank you !'.format(self.NAME, self.he.get(), self.se.get())
+            messagebox.showinfo('Order placed', message)
 
     def orders(self):
         ''' 查看所有订单信息 '''
