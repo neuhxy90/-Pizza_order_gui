@@ -179,7 +179,7 @@ class Order:
     @param : 
     @return: 
     '''
-    def __init__(self, id, uid, items, house_no, street, city, pizzas_price, delivery_fee, total):
+    def __init__(self, id, uid, items, house_no, street, city, pizzas_price, delivery_fee, total, time):
         self.id = id                        # 订单ID
         self.uid = uid                      # 客户ID
         self.items = items                  # Pizza信息
@@ -189,6 +189,7 @@ class Order:
         self.pizzas_price = pizzas_price    # Pizza 总价
         self.delivery_fee = delivery_fee    # 配送费
         self.total = total                  # 订单总价
+        self.time = time                    # 下单时间
 
 
 
@@ -793,9 +794,16 @@ class Main:
         ''' 根据id查找pizza数据 '''
         return [p for p in pizzas if p.id == value]
 
+
+    def get_order(self, key, value):
+        ''' 根据id查找 Order 数据 '''
+        return [o for o in orders if o.id == value]
+
+
     def create_order(self, val):
         self.flush()
         self.show_regular_pizzas()
+
 
     def show_regular_pizzas(self):
         ''' 显示普通 Pizza '''
@@ -814,9 +822,10 @@ class Main:
         self.canva.place(x=0, y=0)
 
         # 定义每个 Pizza 的宽度和高度
-        self.cwidth = 334               # canvas width
-        self.cheight = 400              # canvas height
         self.cc = 4                     # 定义每行显示4个
+        
+        self.cwidth = round(WIDTH/self.cc)               # canvas width
+        self.cheight = 400              # canvas height
         self.imgs = []                  # 存储所有的 pizza 图片
         self.ids = []
 
@@ -957,52 +966,7 @@ class Main:
         #         self.__labels__[int(d)].config(
         #             text='REMOVE', fg='SpringGreen2')
 
-    def minus_pizza(self, minus, id, event):
-        ''' 购物车数量+1 '''
-        # 购物车原来就有的个数
-        n = int(self.user_cart[id].get())
-        print('点击加入购物车', id, n, 1)
-        tt = n - 1 if n >= 1 else 0
-        print(tt)
-        self.user_cart[id].set(tt)
-        self.update_cart(id)
 
-    def plus_pizza(self, plus, id, event):
-        ''' 购物车数量+1 '''
-        # 购物车原来就有的个数
-        n = int(self.user_cart[id].get())
-        print('点击加入购物车', id, n, 1)
-        tt = n + 1 if n <= int(max_cart_item)-1 else int(max_cart_item)
-        self.user_cart[id].set(tt)
-        self.update_cart(id)
-
-    def add_to_cart(self, cartBtn, id, event):
-        ''' 加入购物车 '''
-        # 获取当前id 的 Pizza 在购物车里有多少件
-        num = int(self.user_cart.get(id).get())
-        print('点击加入购物车', id, num)
-        if num == 0:
-            num = 1
-        self.user_cart[id].set(num)
-        self.update_cart(id)
-
-    def update_cart(self, id):
-        '''更新购物车中当前 Pizza 的数量'''
-        # 获取当前购物车中Pizza的个数及总价
-        self.ITEMS = sum([int(self.user_cart.get(c).get())
-                          for c in self.user_cart])
-        self.TOTAL = sum([int(self.user_cart.get(
-            c).get()) * self.get_pizza('id', c)[0].price for c in self.user_cart])
-
-        self.tl2.config(text=str(self.ITEMS))
-        self.tl.config(text='{}{}{}'.format(
-            'TOTAL=', 
-            money, 
-            self.TOTAL
-        ))  
-        # 更新购物车页面总价
-        self.total_price.config(text='{}{}'.format(money,self.TOTAL))
-        # total amount
 
     def show_gourmet_pizzas(self):
         ''' 点击进入精品 Pizza '''
@@ -1219,26 +1183,26 @@ class Main:
 
         # 绘制一个红色的大框
         self.canva.create_rectangle(
-            50, 288, 950, 358, 
+            50, 288, 950, 318, 
             fill='brown3', 
             outline='white', 
             width=2
         )
 
-        Label(self.canva, text='YOUR CART DETAILS', font=('Sans 21 bold'),
-              fg='snow', bg='brown3').place(x=60, y=295, width=300, height=55)
+        Label(self.canva, text='YOUR CART DETAILS', font=('Sans 14 bold'),
+              fg='snow', bg='brown3').place(x=60, y=295, width=300, height=20)
         # 订单详情的表头：名称，数量，总价
         Label(
             self.canva,
             text='Item',
-            font=('Sans 17 bold'),
+            font=('Sans 12 bold'),
             fg='gray2', bg='white'
         ).place(x=100, y=370)
 
         Label(
             self.canva,
             text='Type',
-            font=('Sans 17 bold'),
+            font=('Sans 12 bold'),
             fg='gray2',
             bg='white'
         ).place(x=500, y=370)
@@ -1246,7 +1210,7 @@ class Main:
         Label(
             self.canva,
             text='Amount',
-            font=('Sans 17 bold'),
+            font=('Sans 12 bold'),
             fg='gray2',
             bg='white'
         ).place(x=650, y=370)
@@ -1255,7 +1219,7 @@ class Main:
             self.canva,
             text='Price',
             anchor='e',
-            font=('Sans 17 bold'),
+            font=('Sans 12 bold'),
             fg='gray2',
             bg='white'
         ).place(x=830, y=370)
@@ -1282,7 +1246,7 @@ class Main:
             Label(
                 self.canva,
                 text=item.name,
-                font=('Sans 15 bold'),
+                font=('Sans 11 bold'),
                 bg='white',
                 fg='gray4'
             ).place(x=100, y=430+40*i)
@@ -1303,7 +1267,7 @@ class Main:
                 relief=FLAT,
                 fg='white',
                 text='-',
-                font=("sans 12 bold")
+                font=("sans 11 bold")
             )
             minus.place(x=650, y=432+40*i, width=20, height=20)
             minus.bind(
@@ -1339,7 +1303,7 @@ class Main:
                 self.canva,
                 anchor='e',
                 text='{}{}'.format(money, item.price*a),
-                font=('Times 15 bold'),
+                font=('Times 11 bold'),
                 bg='white'
             ).place(x=850, y=430+40*i)
 
@@ -1353,7 +1317,7 @@ class Main:
         Label(
             self.canva,
             text='TOTAL',
-            font=('Sans 17 bold'),
+            font=('Sans 12 bold'),
             bg='white',
             fg='gray2'
         ).place(x=100, y=445+40*(i+1))
@@ -1362,7 +1326,7 @@ class Main:
             self.canva,
             anchor='e',
             text='{}{}'.format(money, self.TOTAL),
-            font=('Sans 17 bold'),
+            font=('Sans 12 bold'),
             bg='white',
             fg='gray2'
         )
@@ -1374,7 +1338,7 @@ class Main:
             text='Place Order',
             bg='firebrick3',
             fg='snow',
-            font=('Sans 15 bold')
+            font=('Sans 12 bold')
         )
         self.po.place(x=800, y=460+40*(i+2), width=150, height=50)
         self.po.bind(
@@ -1402,50 +1366,123 @@ class Main:
             user_carts = {c: self.user_cart[c] for c in self.user_cart if int(self.user_cart[c].get()) > 0}
 
             # 创建订单
-            items = [Item(c, self.NAME, self.get_pizza(id, c)[0], int(user_carts[c].get()), user_carts[c]) for c in user_carts]
-            order = Order(len(orders)+1, self.NAME, items, house_no, street, city, self.TOTAL, delivery_fee, total)
+            items = [Item(c, self.NAME, self.get_pizza(id, c)[0], int(user_carts[c].get()), int(user_carts[c].get()) * self.get_pizza(id, c)[0].price) for c in user_carts]
+            order = Order(len(orders)+1, self.NAME, items, house_no, street, city, self.TOTAL, delivery_fee, total, datetime.now())
             orders.append(order)
 
             # 清空购物车
             for c in user_carts:
-                self.user_cart[c] = StringVar()
+                self.user_cart[c].set(0)
+            self.TOTAL = 0
+            self.ITEMS = 0
+
 
     def orders(self):
         ''' 查看所有订单信息 '''
 
+        self.flush()
+        self.create_header()
+
+        # self.f.place(x=0, y=0)
+        self.frame.config(
+            width=WIDTH-30,
+            height=HEIGHT-100,
+            bg='white'
+        )
+        self.canva = Canvas(
+            self.frame,
+            bd=-2,
+            bg='white',
+            width=WIDTH-30,
+            height=HEIGHT-100,
+            highlightthickness=1
+        )  # 1000
+        self.canva.place(x=0, y=0)
+
         # 方案1： 以表格绘制
-        columns = ['Item', 'Time', 'Amount', 'Price']
-        treeview = ttk.Treeview(self.canva, height=18,
-                                show="headings", columns=columns)  # 表格
+        columns = ['ID', 'Item', 'Time', 'Amount', 'Price']
+        self.treeview = ttk.Treeview(
+            self.canva, 
+            height=18,
+            show="headings", 
+            columns=columns
+        )  # 表格
 
-        treeview.place(x=100, y=430)
+        self.treeview.place(x=200, y=430)
 
-        treeview.column('Item', width=300, anchor='w')
-        treeview.column('Time', width=200, anchor='center')
-        treeview.column('Amount', width=100, anchor='center')
-        treeview.column('Price', width=100, anchor='center')
+        self.treeview.column('ID', width=50, anchor='w')
+        self.treeview.column('Item', width=100, anchor='center')
+        self.treeview.column('Time', width=100, anchor='center')
+        self.treeview.column('Amount', width=100, anchor='center')
+        self.treeview.column('Price', width=100, anchor='center')
 
         for cc in columns:
-            treeview.heading(cc, text=cc)
+            self.treeview.heading(cc, text=cc)
         
         i = 0
-        treeview.pack(side=LEFT, fill=BOTH)
+        self.treeview.pack(side=LEFT, fill=BOTH)
         for i, c in enumerate(orders):
-            treeview.insert(
+            self.treeview.insert(
                 '', i, 
-                values=(c.id, '{}...'.format(c.items[0].pizza.name), len(c.items), c.total)
+                values=(c.id, '{}...'.format(c.items[0].pizza.name), c.time.strftime('%Y-%m-%d %H:%M'), len(c.items), c.total)
             )
         # 显示总价
-        treeview.insert('', i+1, values=('Total', '', self.ITEMS, self.TOTAL))
+        # treeview.insert('', i+1, values=('Total', '', self.ITEMS, self.TOTAL))
+
+        self.treeview.bind('<Double-1>', self.show_order)
+
+        for col in columns:  # 绑定函数，使表头可排序
+            self.treeview.heading(col, text=col, command=lambda _col=col: self.treeview_sort_column(self.treeview, _col, False))
 
 
-    def show_order(self):
+    def treeview_sort_column(self, tv, col, reverse):  # Treeview、列名、排列方式
+        l = [(tv.set(k, col), k) for k in tv.get_children('')]
+        l.sort(reverse=reverse)  # 排序方式
+        # rearrange items in sorted positions
+        for index, (val, k) in enumerate(l):  # 根据排序后索引移动
+            tv.move(k, '', index)
+        tv.heading(col, command=lambda: self.treeview_sort_column(tv, col, not reverse))  # 重写标题，使之成为再点倒序的标题
+
+
+    def show_order(self, event):
         ''' 查看订单的具体信息 '''
 
+        self.flush()
+        self.create_header()
+
+        # self.f.place(x=0, y=0)
+        self.frame.config(
+            width=WIDTH-30,
+            height=HEIGHT-100,
+            bg='white'
+        )
+        self.canva = Canvas(
+            self.frame,
+            bd=-2,
+            bg='white',
+            width=WIDTH-30,
+            height=HEIGHT-100,
+            highlightthickness=1
+        )  # 1000
+        self.canva.place(x=0, y=0)
+
+        for item in self.treeview.selection():
+        #item = I001
+            item_text = self.treeview.item(item, "values")
+            #print(item_text[0:2])  # 输出所选行的值
+        column= self.treeview.identify_column(event.x)# 列
+        row = self.treeview.identify_row(event.y)  # 行
+        print(row)
+        val = item_text[0:1]
+        print('获取订单ID',val[0])
+        id = int(val[0])
+        print('全部订单', orders)
+
+        order = self.get_order('id', id)[0]
+        print('订单：', order)
         # 方案1： 以表格绘制
         columns = ['Item', 'Type', 'Amount', 'Price']
-        treeview = ttk.Treeview(self.canva, height=18,
-                                show="headings", columns=columns)  # 表格
+        treeview = ttk.Treeview(self.canva, height=18, show="headings", columns=columns)  # 表格
 
         treeview.place(x=100, y=430)
 
@@ -1458,14 +1495,60 @@ class Main:
             treeview.heading(cc, text=cc)
 
         treeview.pack(side=LEFT, fill=BOTH)
-        for i, c in enumerate(orders):
-            item = self.get_pizza('id', c)[0]
-            amount = int(self.user_cart[c].get())
-            price = amount * item.price
-            treeview.insert('', i, values=(
-                item.name, item.type, amount, price))
+        for i, c in enumerate(order.items):
+            item = self.get_pizza('id', c.pizza.id)[0]
+            amount = c.amount
+            price = c.price
+            treeview.insert('', i, values=(item.name, item.type, amount, price))
         # 显示总价
-        treeview.insert('', i+1, values=('Total', '', self.ITEMS, self.TOTAL))
+        treeview.insert('', i+1, values=('Total', '', order.time, order.total))
+
+    def minus_pizza(self, minus, id, event):
+        ''' 购物车数量+1 '''
+        # 购物车原来就有的个数
+        n = int(self.user_cart[id].get())
+        print('点击加入购物车', id, n, 1)
+        tt = n - 1 if n >= 1 else 0
+        print(tt)
+        self.user_cart[id].set(tt)
+        # self.update_cart(id)
+
+    def plus_pizza(self, plus, id, event):
+        ''' 购物车数量+1 '''
+        # 购物车原来就有的个数
+        n = int(self.user_cart[id].get())
+        print('点击加入购物车', id, n, 1)
+        tt = n + 1 if n <= int(max_cart_item)-1 else int(max_cart_item)
+        self.user_cart[id].set(tt)
+        # self.update_cart(id)
+
+    def add_to_cart(self, cartBtn, id, event):
+        ''' 加入购物车 '''
+        # 获取当前id 的 Pizza 在购物车里有多少件
+        num = int(self.user_cart.get(id).get())
+        print('点击加入购物车', id, num)
+        if num == 0:
+            num = 1
+        self.user_cart[id].set(num)
+        self.update_cart(id)
+
+    def update_cart(self, id):
+        '''更新购物车中当前 Pizza 的数量'''
+        # 获取当前购物车中Pizza的个数及总价
+        self.ITEMS = sum([int(self.user_cart.get(c).get())
+                          for c in self.user_cart])
+        self.TOTAL = sum([int(self.user_cart.get(
+            c).get()) * self.get_pizza('id', c)[0].price for c in self.user_cart])
+
+        self.tl2.config(text=str(self.ITEMS))
+        self.tl.config(text='{}{}{}'.format(
+            'TOTAL=', 
+            money, 
+            self.TOTAL
+        ))  
+        # 更新购物车页面总价
+        self.total_price.config(text='{}{}'.format(money,self.TOTAL))
+        # total amount
 
 
 
