@@ -1,11 +1,9 @@
-try:                        # for Python 3
-    from tkinter import *
-    from tkinter import messagebox
-    # from tkinter.tix import *
-except ImportError:         # for Python 2
-    from Tkinter import *
-    from Tkinter import messagebox
-    from Tkinter.tix import *
+# 
+from tkinter import *
+from tkinter import ttk
+from tkinter import messagebox
+# from tkinter import *
+from functools import partial  # for mouse events
 from PIL import ImageTk, Image
 from sqlite3 import *
 import requests
@@ -14,124 +12,140 @@ import smtplib  # for email
 from email.mime.text import MIMEText
 from email.header import Header
 import math
-from functools import partial  # for mouse events
 
 # 定义主界面大小
 WIDTH = 1366
 HEIGHT = 768
 
 # 定义程序的名称
-TITLE = 'Heavenly Pizza GUI Ordering System'
+title = 'Heavenly Pizza GUI Ordering System'
 # 定义一组颜色样式
-COLOR = {
-    'BACKGROUND':'linen',
-    'SUCCESS':'green4',
-    'INFO':'ivory2',
-    'PRIMARY':'deep sky blue',
-    'ERROR': 'tomato',
-    'WARNING': 'orange'
+color = {
+    'bg': 'linen',
+    'success': 'green4',
+    'info': 'ivory2',
+    'primary': 'deep sky blue',
+    'error': 'tomato',
+    'warning': 'orange'
 }
 # 定义用户找回密码配置的邮箱
-MAIL = {
-    'account':'carol.chen.cn@outlook.com',
+mail = {
+    'account': 'carol.chen.cn@outlook.com',
     'password': '1qazxsw23edc',
-    'port':587,
+    'port': 587,
     'host': 'smtp.office365.com'
 }
-PIZZAS = {
-    # 定义每一个pizza 展示大小
-    'width':330,
-    'height':429,
-    # 常规 Pizza 数据
-    'Regular pizzas':{
-        'price':'$10',
-        'list':[
-            {
-                'id':1,
-                'name':'Margherita',
-                'img': 'img/Margherita.jpg',
-                'content':'Fresh tomato, mozzarella, fresh basil, parmesan'
-            },
-            {
-                'id':2,
-                'name':'Kiwi',
-                'img': 'img/Kiwi.jpg',
-                'content':'Bacon, egg, mozzarella'
-            },
-            {
-                'id':3,
-                'name':'Garlic',
-                'img': 'img/Garlic.jpg',
-                'content':'Mozzarella, garlic'
-            },
-            {
-                'id':4,
-                'name':'Cheese',
-                'img': 'img/Cheese.jpg',
-                'content':'Mozzarella, oregano'
-            },
-            {
-                'id':5,
-                'name':'Hawaiian',
-                'img': 'img/Hawaiian.jpg',
-                'content':'Ham, pineapple, mozzarella'
-            },
-            {
-                'id':6,
-                'name':'Mediterranean (vegan)',
-                'img': 'img/Mediterranean (vegan).jpg',
-                'content':'Lebanese herbs, olive oil, fresh tomatoes, olives, onion'
-            }
-        ]
+# 配置当前货币单位
+money = '$'
+# 定义所有的Pizzas数据
+pizzas = [
+    {
+        'id': 1,
+        'name': 'Margherita',
+        'img': 'img/Margherita.jpg',
+        'price': 10,
+        'type': 'regular',
+        'content': 'Fresh tomato, mozzarella, fresh basil, parmesan'
     },
-    # 精品 Pizza 数据
-    'Gourmet pizzas':{
-        'price':'$17',
-        'list':[
-            {
-                'id':1,
-                'name':'Meat',
-                'img': 'img/Meat.jpg',
-                'content':'Bacon, pancetta, ham, onion, pepperoni, mozzarella'
-            },
-            {
-                'id':2,
-                'name':'Chicken Cranberry',
-                'img': 'img/Chicken Cranberry.jpg',
-                'content':'Smoked chicken, cranberry, camembert mozzarella'
-            },
-            {
-                'id':3,
-                'name':'Satay Chicken',
-                'img': 'img/Satay Chicken.jpg',
-                'content':'Smoked chic, onions, capsicum, pine nuts, satay sauce, mozzarella Chilli flakes and dried basil'
-            },
-            {
-                'id':4,
-                'name':'Big BBQ Bacon',
-                'img': 'img/Big BBQ Bacon.jpg',
-                'content':'Smoky Bacon served on our classic marinara tomato sauce, heaped with mozzarella, topped off with a sweet and tangy BBQ drizzle'
-            },
-            {
-                'id':5,
-                'name':'Veggie',
-                'img': 'img/Veggie.jpg',
-                'content':'sweet red onion, mushroom, red capsicum & melting mozzarella with drizzles of our tangy roast capsicum drizzle, finished with a dash of oregano.'
-            },
-            {
-                'id':6,
-                'name':'Meatlovers',
-                'img': 'img/Meatlovers.jpg',
-                'content':'Spicy pepperoni, Italian sausage, succulent ham, seasoned ground beef and crispy bacon all piled onto classic marinara sauce and finished with cheesy mozzarella and a drizzle of BBQ sauce.'
-            }
-        ]
+    {
+        'id': 2,
+        'name': 'Kiwi',
+        'img': 'img/Kiwi.jpg',
+        'price': 10,
+        'type': 'regular',
+        'content': 'Bacon, egg, mozzarella'
+    },
+    {
+        'id': 3,
+        'name': 'Garlic',
+        'img': 'img/Garlic.jpg',
+        'price': 10,
+        'type': 'regular',
+        'content': 'Mozzarella, garlic'
+    },
+    {
+        'id': 4,
+        'name': 'Cheese',
+        'img': 'img/Cheese.jpg',
+        'price': 10,
+        'type': 'regular',
+        'content': 'Mozzarella, oregano'
+    },
+    {
+        'id': 5,
+        'name': 'Hawaiian',
+        'img': 'img/Hawaiian.jpg',
+        'price': 10,
+        'type': 'regular',
+        'content': 'Ham, pineapple, mozzarella'
+    },
+    {
+        'id': 6,
+        'name': 'Mediterranean (vegan)',
+        'img': 'img/Mediterranean (vegan).jpg',
+        'price': 10,
+        'type': 'regular',
+        'content': 'Lebanese herbs, olive oil, fresh tomatoes, olives, onion'
+    },
+    {
+        'id': 7,
+        'name': 'Meat',
+        'img': 'img/Meat.jpg',
+        'price': 17,
+        'type': 'gourmet',
+        'content': 'Bacon, pancetta, ham, onion, pepperoni, mozzarella'
+    },
+    {
+        'id': 8,
+        'name': 'Chicken Cranberry',
+        'img': 'img/Chicken Cranberry.jpg',
+        'price': 17,
+        'type': 'gourmet',
+        'content': 'Smoked chicken, cranberry, camembert mozzarella'
+    },
+    {
+        'id': 9,
+        'name': 'Satay Chicken',
+        'img': 'img/Satay Chicken.jpg',
+        'price': 17,
+        'type': 'gourmet',
+        'content': 'Smoked chic, onions, capsicum, pine nuts, satay sauce, mozzarella Chilli flakes and dried basil'
+    },
+    {
+        'id': 10,
+        'name': 'Big BBQ Bacon',
+        'img': 'img/Big BBQ Bacon.jpg',
+        'price': 17,
+        'type': 'gourmet',
+        'content': 'Smoky Bacon served on our classic marinara tomato sauce, heaped with mozzarella, topped off with a sweet and tangy BBQ drizzle'
+    },
+    {
+        'id': 11,
+        'name': 'Veggie',
+        'img': 'img/Veggie.jpg',
+        'price': 17,
+        'type': 'gourmet',
+        'content': 'sweet red onion, mushroom, red capsicum & melting mozzarella with drizzles of our tangy roast capsicum drizzle, finished with a dash of oregano.'
+    },
+    {
+        'id': 12,
+        'name': 'Meatlovers',
+        'img': 'img/Meatlovers.jpg',
+        'price': 17,
+        'type': 'gourmet',
+        'content': 'Spicy pepperoni, Italian sausage, succulent ham, seasoned ground beef and crispy bacon all piled onto classic marinara sauce and finished with cheesy mozzarella and a drizzle of BBQ sauce.'
     }
-}
+]
+# 定义购物车允许购买最多的Pizza个数
+max_cart_item = 5
 
 # 主程序初始化
 s = Tk()
-s.title(TITLE)
+s.title(title)
 s.geometry("1366x768")
+# 禁止用户调整窗体大小
+s.resizable(0, 0)
+
 
 class Main:
     def __init__(self):
@@ -155,6 +169,13 @@ class Main:
         # 初始化购物车内Pizza个数
         self.ITEMS = 0
         self.TOTAL = 0
+        # 定义每个Pizza 购买数量，为购物车最终结算使用
+        self.user_cart = {p['id']: StringVar() for p in pizzas}
+        # self.ids = []
+        # 初始默认都是0
+        for uc in self.user_cart:
+            self.user_cart[uc].set(0)
+        # print(self.user_cart)
         # 默认进入登录页面
         self.login()
         # 窗体主函数运行
@@ -173,51 +194,79 @@ class Main:
             self.flush()
         except:
             pass
-        self.f.config(bg=COLOR['BACKGROUND'])
+        self.f.config(bg=color['bg'])
 
         #   CANVAS  for image
-        self.canvas = Canvas(self.f, bg=COLOR['BACKGROUND'], bd=-2)
-        self.canvas.place(x=0, y=0, width=WIDTH, height=HEIGHT)  # previous height=125
+        self.canvas = Canvas(self.f, bg=color['bg'], bd=-2)
+        # previous height=125
+        self.canvas.place(x=0, y=0, width=WIDTH, height=HEIGHT)
         # self.img=ImageTk.PhotoImage(Image.open('img/background_.jpg'))
         # self.canvas.create_image(681,405,image=self.img)
         self.l.append(self.canvas)
 
         #   USERNAME label
-        self.title = Label(self.f, bg=COLOR['BACKGROUND'], text='Sign in ' + TITLE, padx=10, anchor='center', font=('Georgia 14 bold'))
+        self.title = Label(self.f, bg=color['bg'], text='Sign in ' +
+                           title, padx=10, anchor='center', font=('Georgia 14 bold'))
         self.title.place(x=WIDTH/2 - 200, y=50, width=600, height=25)
         self.l.append(self.title)
 
         #   USERNAME label
-        self.username = Label(self.f, bg=COLOR['BACKGROUND'], text='Username', padx=10, anchor='e')
-        self.username.place(x=WIDTH/2 - 110, y=130, width=110, height=25)
+        self.username = Label(
+            self.f,
+            bg=color['bg'],
+            text='Username',
+            padx=10,
+            anchor='e')
+        self.username.place(
+            x=WIDTH/2 - 110,
+            y=130,
+            width=110,
+            height=25)
         self.l.append(self.username)
 
         #  USERNAME entry_field
-        self.un_entry = Entry(self.f, bg='azure', justify='center')
+        e = StringVar()
+        self.un_entry = Entry(self.f,
+                              textvariable=e,
+                              bg='azure',
+                              justify='center')
         self.un_entry.place(x=WIDTH/2, y=130, width=200, height=25)
         self.l.append(self.un_entry)
+        # e.set('1')
 
         #   PASSWORD label
-        self.passw = Label(self.f, bg=COLOR['BACKGROUND'], text='Password', padx=10,  anchor='e')
+        self.passw = Label(
+            self.f, bg=color['bg'], text='Password', padx=10,  anchor='e')
         self.passw.place(x=WIDTH/2 - 110, y=175, width=110, height=25)
         self.l.append(self.passw)
 
         #   PASSWORD entry_field
-        self.p_entry = Entry(self.f, show="*", bg='azure', justify='center')
+        self.p_entry = Entry(self.f,
+                             show="*",
+                             textvariable=e,
+                             bg='azure',
+                             justify='center')
         self.p_entry.place(x=WIDTH/2, y=175, width=200, height=25)
         self.l.append(self.p_entry)
+        e.set('1')
 
         # 去注册按钮
-        self.r = Button(self.f, bg=COLOR['INFO'], text='Create an account >>', command=self.register)
+        self.r = Button(
+            self.f, bg=color['info'], text='Create an account >>', command=self.register)
         self.r.place(x=WIDTH/2 - 100, y=270, width=150, height=28)
         self.l.append(self.r)
 
         # 登录按钮
-        self.submit = Button(self.f, bg=COLOR['SUCCESS'], fg='snow', text='Sign in',command=lambda: self.result("login"))
+        self.submit = Button(
+            self.f,
+            bg=color['success'],
+            fg='snow',
+            text='Sign in',
+            command=lambda: self.result("login"))
         self.submit.place(x=WIDTH/2 + 100, y=270, width=100, height=28)
         self.l.append(self.submit)
 
-    
+
     def register(self):
         '''
         [注册界面] 
@@ -230,10 +279,10 @@ class Main:
             self.flush()
         except:
             pass
-        self.f.config(bg=COLOR['BACKGROUND'])
+        self.f.config(bg=color['bg'])
 
         #   CANVAS  for image
-        self.canvas = Canvas(self.f, bg=COLOR['BACKGROUND'], bd=-2)
+        self.canvas = Canvas(self.f, bg=color['bg'], bd=-2)
         # previous height=125
         self.canvas.place(x=0, y=0, width=WIDTH, height=HEIGHT)
         # self.img=ImageTk.PhotoImage(Image.open('img/background.jpg'))
@@ -241,12 +290,14 @@ class Main:
         self.l.append(self.canvas)
 
         #   USERNAME label
-        self.title = Label(self.f, bg=COLOR['BACKGROUND'], text='Sign up ' + TITLE, padx=10, anchor='center', font=('Georgia 14 bold'))
+        self.title = Label(self.f, bg=color['bg'], text='Sign up ' +
+                           title, padx=10, anchor='center', font=('Georgia 14 bold'))
         self.title.place(x=WIDTH/2 - 200, y=50, width=600, height=25)
         self.l.append(self.title)
 
         #   NAME label
-        self.Name = Label(self.f, bg=COLOR['BACKGROUND'], text='Name', padx=10, anchor='e')
+        self.Name = Label(
+            self.f, bg=color['bg'], text='Name', padx=10, anchor='e')
         self.Name.place(x=WIDTH/2 - 110, y=100, width=110, height=25)
         self.l.append(self.Name)
 
@@ -256,7 +307,8 @@ class Main:
         self.l.append(self.N_entry)
 
         #   USERNAME label
-        self.name = Label(self.f, bg=COLOR['BACKGROUND'], text='Userame', padx=10, anchor='e')
+        self.name = Label(
+            self.f, bg=color['bg'], text='Userame', padx=10, anchor='e')
         self.name.place(x=WIDTH/2 - 110, y=140, width=110, height=25)
         self.l.append(self.name)
 
@@ -266,7 +318,8 @@ class Main:
         self.l.append(self.n_entry)
 
         #   PASSWORD label
-        self.plabel = Label(self.f, bg=COLOR['BACKGROUND'], text='Password', padx=10, anchor='e')
+        self.plabel = Label(
+            self.f, bg=color['bg'], text='Password', padx=10, anchor='e')
         self.plabel.place(x=WIDTH/2 - 110, y=180, width=110, height=25)
         self.l.append(self.plabel)
 
@@ -276,7 +329,8 @@ class Main:
         self.l.append(self.p_entry)
 
         #   PASSWORD2 label
-        self.plabel2 = Label(self.f, bg=COLOR['BACKGROUND'], text='Retype password', padx=10, anchor='e')
+        self.plabel2 = Label(
+            self.f, bg=color['bg'], text='Retype password', padx=10, anchor='e')
         self.plabel2.place(x=WIDTH/2 - 140, y=220, width=140, height=25)
         self.l.append(self.plabel2)
 
@@ -285,28 +339,29 @@ class Main:
         self.p_entry2.place(x=WIDTH/2, y=220, width=200, height=25)
         self.l.append(self.p_entry2)
 
-        #   EMAIL field
-        self.e_mail = Label(self.f, bg=COLOR['BACKGROUND'], text="Your email", padx=10, anchor='e')
+        #   Email field
+        self.e_mail = Label(
+            self.f, bg=color['bg'], text="Your email", padx=10, anchor='e')
         self.e_mail.place(x=WIDTH/2 - 110, y=260, width=110, height=25)
         self.l.append(self.e_mail)
 
-        #   EMAIL entry_field
+        #   Email entry_field
         self.e_entry = Entry(self.f)
         self.e_entry.place(x=WIDTH/2, y=260, width=200, height=25)
         self.l.append(self.e_entry)
 
         #   REGISTER button
-        self.rbutton = Button(self.f, bg=COLOR['SUCCESS'], fg='snow', text='Sign up',command=lambda: self.result("register"))
+        self.rbutton = Button(
+            self.f, bg=color['success'], fg='snow', text='Sign up', command=lambda: self.result("register"))
         self.rbutton.place(x=WIDTH/2 + 90, y=320, width=110, height=31)
         self.l.append(self.rbutton)
 
-
         # 返回登录按钮
-        self.r = Button(self.f, bg=COLOR['INFO'], text='<< Back to Sign in', command=self.login)
+        self.r = Button(
+            self.f, bg=color['info'], text='<< Back to Sign in', command=self.login)
         self.r.place(x=WIDTH/2 - 100, y=320, width=130, height=31)
         self.l.append(self.r)
         self.scr.mainloop()
-
 
     def flush(self):
         '''
@@ -314,7 +369,6 @@ class Main:
         '''
         for i in self.l:
             i.destroy()
-
 
     def result(self, val):
         if val == "login":
@@ -329,7 +383,7 @@ class Main:
                         self.un_entry.get()))  # wrong username
                     self.__init__()
                 else:  # username exists, check for correct password now
-                    self.MAIL = list(self.cur.execute(
+                    self.mail = list(self.cur.execute(
                         "select email from staff where user=%r" % (self.un_entry.get())))[0][0]
                     self.NAME = list(self.cur.execute(
                         "select name from staff where user=%r" % (self.un_entry.get())))[0][0]
@@ -344,8 +398,9 @@ class Main:
                         messagebox.showinfo(
                             "Wrong password", "Please enter a valid password\nForgot password ?")
                         self.rbutton = Button(
-                            self.scr, text='Recover my password', command=self.recover_password, padx=10, anchor='center', relief='flat', bg=COLOR['WARNING'])
-                        self.rbutton.place(x=WIDTH/2, y=220, width=150, height=30)
+                            self.scr, text='Recover my password', command=self.recover_password, padx=10, anchor='center', relief=FLAT, bg=color['warning'])
+                        self.rbutton.place(
+                            x=WIDTH/2, y=220, width=150, height=30)
                         self.l.append(self.rbutton)
         elif val == "register":
             if not len(self.n_entry.get()) or not len(self.N_entry.get()) or not len(self.p_entry.get()) or not len(self.p_entry2.get()) or not len(self.e_entry.get()):  # no username given
@@ -377,7 +432,6 @@ class Main:
                     messagebox.showinfo(
                         "Mismatched passwords", "Both passwords should be same\nPlease try again.")
 
-
     def recover_password(self):
         ''' 给邮箱发送一封邮件，内容是对应账号的密码
         '''
@@ -386,30 +440,32 @@ class Main:
         except:
             self.rbutton.destroy()
         try:
-            mail = list(self.cur.execute("select email from staff where user=%r and name=%r" % (self.un_entry.get(), self.NAME)))[0][0]
+            mail = list(self.cur.execute("select email from staff where user=%r and name=%r" % (
+                self.un_entry.get(), self.NAME)))[0][0]
             print('email id is ', mail)
             self.mail = mail
             password = list(self.cur.execute(
                 "select passw from staff where name=%r" % (self.NAME)))[0][0]
-            server = smtplib.SMTP(MAIL['host'], MAIL['port'])
+            server = smtplib.SMTP(mail['host'], mail['port'])
             server.starttls()
             print('connected to outlook')
-            server.login(MAIL['account'], MAIL['password'])
+            server.login(mail['account'], mail['password'])
             print('logged in')
 
             receivers = [mail]
-            Subject = 'Recover password for %s' % TITLE
-            Content = 'Hello '+self.NAME+',\n\nYour password for '+TITLE+' is '+''+password+''
+            Subject = 'Recover password for %s' % title
+            Content = 'Hello '+self.NAME+',\n\nYour password for '+title+' is '+''+password+''
             msg = MIMEText(Content, 'plain', 'utf-8')
-            # msg['From'] = Header(MAIL['account'], 'utf-8') 
+            # msg['From'] = Header(mail['account'], 'utf-8')
             msg['To'] = Header('', 'utf-8')
             msg['Subject'] = Header(Subject, 'utf-8')
             print(msg)
-            server.sendmail(MAIL['account'], receivers, msg.as_string())
-            
+            server.sendmail(mail['account'], receivers, msg.as_string())
+
             print('mail sent')
             server.close()
-            messagebox.showinfo('Info', 'Dear '+self.NAME+', your password has been sent to ' + mail+'\nPlease try again using the correct password.')
+            messagebox.showinfo('Info', 'Dear '+self.NAME+', your password has been sent to ' +
+                                mail+'\nPlease try again using the correct password.')
         except smtplib.SMTPException as e:
             print(e)
             messagebox.showinfo(
@@ -417,11 +473,10 @@ class Main:
         self.flush()
         self.__init__()
 
-
     def myfunction(self, event):
         # 'width' & 'height' are actual scrollable frame size.
         self.canvas.configure(scrollregion=self.canvas.bbox(
-            "all"), width=WIDTH-15, height=HEIGHT)
+            "all"), width=WIDTH-20, height=HEIGHT-80)
 
     def func(self, val):
         if self.dict[val][1]['R'] == 0 and self.dict[val][1]['M'] == 0 and self.dict[val][1]['L'] == 0:
@@ -470,22 +525,6 @@ class Main:
             self.tl.config(text='TOTAL='+str(self.TOTAL) +
                            ' \u0024')  # total amount
 
-    def drink_cart(self, val, price):
-        if self.__labels2__[int(val)]['text'] == 'REMOVE':  # remove from cart
-            self.D[val][0] = False
-            self.TOTAL -= self.D[val][2]
-            self.ITEMS -= 1
-            self.__labels2__[int(val)].config(
-                text='ADD TO CART', bg='light sea green', fg='white')
-        else:  # ADD TO CART ##
-            self.D[val][0] = True
-            self.TOTAL += self.D[val][2]
-            self.ITEMS += 1
-            self.__labels2__[int(val)].config(
-                text='REMOVE', bg='light sea green', fg='black')
-        self.tl2.config(text=str(self.ITEMS))  # ITEMS ##
-        self.tl.config(text='TOTAL='+str(self.TOTAL)+' \u0024')  # total amount
-
     def meals_func(self, val, price):
         if self.__labels3__[int(val)]['text'] == 'REMOVE':  # remove from cart
             self.M[val][0] = False
@@ -501,48 +540,6 @@ class Main:
                 text='REMOVE', bg='firebrick2', fg='black')
         self.tl2.config(text=str(self.ITEMS))  # ITEMS ##
         self.tl.config(text='TOTAL='+str(self.TOTAL)+' \u0024')  # total amount
-
-    def cbR(self, R, val):  # checkbutton functions
-        if R.get():  # only 'set' when label reads 'ADD TO CART'
-            if self.__labels__[int(val)]['text'] == 'ADD TO CART':
-                self.__R__[int(val)].set(1)
-                self.dict[val][1]['R'] = 1
-            else:  # label reads 'REMOVE', then another checkbox has been clicked.
-                self.__R__[int(val)].set(0)
-        else:
-            if self.__labels__[int(val)]['text'] == 'ADD TO CART':
-                self.__R__[int(val)].set(0)
-                self.dict[val][1]['R'] = 0
-            else:
-                self.__R__[int(val)].set(1)
-
-    def cbM(self, M, val):
-        if M.get():
-            if self.__labels__[int(val)]['text'] == 'ADD TO CART':
-                self.__M__[int(val)].set(1)
-                self.dict[val][1]['M'] = 1
-            else:
-                self.__M__[int(val)].set(0)
-        else:
-            if self.__labels__[int(val)]['text'] == 'ADD TO CART':
-                self.__M__[int(val)].set(0)
-                self.dict[val][1]['M'] = 0
-            else:
-                self.__M__[int(val)].set(1)
-
-    def cbL(self, L, val):
-        if L.get():
-            if self.__labels__[int(val)]['text'] == 'ADD TO CART':
-                self.__L__[int(val)].set(1)
-                self.dict[val][1]['L'] = 1
-            else:
-                self.__L__[int(val)].set(0)
-        else:
-            if self.__labels__[int(val)]['text'] == 'ADD TO CART':
-                self.__L__[int(val)].set(0)
-                self.dict[val][1]['L'] = 0
-            else:
-                self.__L__[int(val)].set(1)
 
     def entry(self, wel, color, event):                          # <<<<<< HOVERING >>>>>>
         self.wel.configure(background=color, foreground='white')
@@ -574,7 +571,6 @@ class Main:
     def exitC(self, pay, color, event):
         self.pay.configure(background=color, foreground='medium aquamarine')
 
-
     def logout(self):
         ''' 注销 '''
         self.head.destroy()
@@ -598,66 +594,96 @@ class Main:
         self.frame.bind("<Configure>", self.myfunction)
 
         # 建立顶部菜单栏
-        self.head = Canvas(self.scr, bd=-2, bg='white')  # head canvas ######
+        self.head = Canvas(self.scr, bd=-2, bg='white')  # head canvas
         self.head.place(x=0, y=0, width=WIDTH, height=59)
         self.l.append(self.head)
 
+        # 常规 Pizza
+        # self.pizza_logo = PhotoImage(
+        #     file='img/pizza_logo.png')  # pizza logo  ##
+        # self.head.create_image(460+20, 29, image=self.pizza_logo)
+        self.pizza_label = Label(
+            self.head, text='Regular pizzas', bg='red', fg='snow', font=('Helvetica 12 bold'))
+        self.pizza_label.place(x=5, y=4, width=150, height=44)
+        self.pizza_label.bind(
+            '<Button-1>', lambda val='1': self.show_regular_pizzas())
+        self.pizza_label.bind('<Enter>', partial(
+            self.entryP, self.pizza_label, 'coral'))
+        self.pizza_label.bind('<Leave>', partial(
+            self.exitP, self.pizza_label, 'red'))
+        self.l.append(self.pizza_label)
+        # self.head.create_oval(405+20, 9, 441+20, 51, fill='red', outline='red', width=2)
+        # self.head.create_oval(405+150+20, 9, 441+150+20, 51, fill='red', outline='red', width=2)
+
+        # 精品 Pizza
+        self.meals_label = Label(self.scr, text='Gourmet pizzas',
+                                 bg='red', fg='snow', padx=10, font=('Helvetica 12 bold'))
+        self.meals_label.place(x=165, y=4, width=150, height=44)
+        self.meals_label.bind(
+            '<Button-1>', lambda val='1': self.show_gourmet_pizzas())
+        self.meals_label.bind('<Enter>', partial(
+            self.entryM, self.meals_label, 'coral'))
+        self.meals_label.bind('<Leave>', partial(
+            self.exitM, self.meals_label, 'red'))
+        self.l.append(self.meals_label)
+
         # WELCOME LABEL ##
-        self.wel = Label(self.head, 
-                    text='Welcome, '+self.NAME, 
-                    fg='red',
-                    bg='white', 
-                    font=('Serif 12 bold'))  
-        
-        self.wel.place(x=6, y=4, width=200, height=44)
+        self.wel = Label(self.head,
+                         text='Welcome, '+self.NAME,
+                         fg='red',
+                         bg='white',
+                         font=('Serif 12 bold'))
+
+        self.wel.place(x=325, y=4, width=200, height=44)
         self.wel.bind('<Enter>', partial(self.entry, self.wel, 'red'))
         self.wel.bind('<Leave>', partial(self.exit_, self.wel, 'white'))
         self.l.append(self.wel)
         # self.head.create_rectangle(5, 3, 106, 54, outline='red', fill='white')
 
         #   Logout button
-        self.logout_btn = Button(self.scr, text='Logout', relief='flat', font=('Serif 12 bold'), fg='snow', bg=COLOR['WARNING'], command=self.logout)
-        self.logout_btn.place(x=200+20, y=4, width=90, height=44)
+        self.logout_btn = Button(
+            self.scr,
+            text='Logout',
+            relief=FLAT,
+            font=('Serif 12 bold'),
+            bg='snow',
+            fg=color['error'],
+            command=self.logout
+        )
+        self.logout_btn.place(x=535, y=4, width=90, height=44)
         self.l.append(self.logout_btn)
 
-        # 常规 Pizza
-        # self.pizza_logo = PhotoImage(
-        #     file='img/pizza_logo.png')  # pizza logo  ##
-        # self.head.create_image(460+20, 29, image=self.pizza_logo)
-        self.pizza_label = Label(self.head, text='Regular pizzas', bg='red', fg='snow', font=('Helvetica 12 bold'))
-        self.pizza_label.place(x=423+20, y=4, width=150, height=44)
-        self.pizza_label.bind('<Button-1>', lambda val='1': self.show_regular_pizzas())
-        self.pizza_label.bind('<Enter>', partial(self.entryP, self.pizza_label, 'coral'))
-        self.pizza_label.bind('<Leave>', partial(self.exitP, self.pizza_label, 'red'))
-        self.l.append(self.pizza_label)
-        # self.head.create_oval(405+20, 9, 441+20, 51, fill='red', outline='red', width=2)
-        # self.head.create_oval(405+150+20, 9, 441+150+20, 51, fill='red', outline='red', width=2)
-
-        # 精品 Pizza
-        self.meals_label = Label(self.scr, text='Gourmet pizzas', bg='red', fg='snow', padx=10, font=('Helvetica 12 bold'))
-        self.meals_label.place(x=695+20, y=4, width=150, height=44)
-        self.meals_label.bind('<Button-1>', lambda val='1': self.show_gourmet_pizzas())
-        self.meals_label.bind('<Enter>', partial(self.entryM, self.meals_label, 'coral'))
-        self.meals_label.bind('<Leave>', partial(self.exitM, self.meals_label, 'red'))
-        self.l.append(self.meals_label)
         # self.head.create_oval(682-5+20, 9, 718-5+20, 51,
         #                       fill='red', outline='red', width=2)
         # self.head.create_oval(682+150-5+20, 9, 718+150-5+20,
         #                       51, fill='red', outline='red', width=2)
 
         # 头部右侧购物车
-        self.pay = Label(self.scr, text='Checkout', fg='medium aquamarine',
-                         bg='snow', font=('Sans 12 bold'))  # checkout logo ##
+        self.pay = Label(
+            self.scr,
+            text='Checkout',
+            fg='medium aquamarine',
+            bg='snow',
+            font=('Sans 12 bold')
+        )
         self.pay.place(x=985, y=8, height=42, width=100)
-        self.pay.bind('<Button-1>', lambda val='1': self.payment_window('1'))
-        self.pay.bind('<Enter>', partial(
-            self.entryC, self.pay, 'medium aquamarine'))
-        self.pay.bind('<Leave>', partial(self.exitC, self.pay, 'white'))
+        self.pay.bind(
+            '<Button-1>',
+            partial(self.payment_window, '1')
+        )
+        self.pay.bind(
+            '<Enter>',
+            partial(self.entryC, self.pay, 'medium aquamarine')
+        )
+        self.pay.bind(
+            '<Leave>',
+            partial(self.exitC, self.pay, 'white')
+        )
         self.l.append(self.pay)
 
         self.head.create_rectangle(
             984, 7, 1085, 50, fill='white', outline='medium aquamarine')
-        
+
         # 购物车小图片
         self.cart = PhotoImage(file='img/cart2.png')  # cart logo ##
         self.head.create_image(1140, 33, image=self.cart)
@@ -677,86 +703,168 @@ class Main:
         self.tl.place(x=1240, y=8, width=95, height=31)
         self.l.append(self.tl)
 
-        
-
         self.__labels__ = ['0']  # list to store label objects ####
 
-
-
+    def get_pizza(self, key, value):
+        ''' 根据条件查找pizza数据 '''
+        return [p for p in pizzas if p[key] == value]
 
     def create_order(self, val):
         self.flush()
         self.show_regular_pizzas()
-
 
     def show_regular_pizzas(self):
         ''' 显示普通 Pizza '''
         self.flush()
         self.create_header()
 
-        # specifications of a 'CANVAS'
-        self.cwidth = PIZZAS['width']+1  # canvas width
-        self.cheight = PIZZAS['height']+1  # canvas height
-
-        self.cbg = 'snow'  # canvas bg color
-        self.ncolor = 'Dodgerblue2'  # name color
-        self.nfont = ("Helvetica 15 normal")  # name font description
-        self.dcolor = 'dim gray'  # desciption color
-        self.dfont = ("Helvetica 10 normal")  # descr. font description
-        self.sizecolor = 'snow'
-        self.sizefont = ("Helvetica 12 normal")
-        self.rec_color = 'snow4'
-        self.cbg2 = 'firebrick1'
-
-
-        self.frame.config(width=WIDTH-15, height=HEIGHT)
-        self.canva = Canvas(self.frame, bd=-2, bg='white',
-                            width=WIDTH-15, height=HEIGHT, highlightthickness=1)
+        # 定义窗体大小
+        self.frame.config(width=WIDTH,
+                          height=HEIGHT)
+        self.canva = Canvas(self.frame,
+                            bd=-2,
+                            bg='white',
+                            width=WIDTH,
+                            height=HEIGHT,
+                            highlightthickness=1)
         self.canva.place(x=0, y=0)
+
+        # 定义每个 Pizza 的宽度和高度
+        self.cwidth = 334               # canvas width
+        self.cheight = 400              # canvas height
         self.cc = 4                     # 定义每行显示4个
         self.imgs = []                  # 存储所有的 pizza 图片
+        self.ids = []
 
-        for i, pizza in enumerate(PIZZAS['Regular pizzas']['list']):
+        # self.carts = {}                 # 定义数量的组件
+        # self.regular_carts = [StringVar()]*len(pizzas['regular']['list'])
+        # print(self.regular_carts)
+        # 获取所有的普通 pizza 列表
+        regular_pizzas = [p for p in pizzas if p['type'] == 'regular']
+        # 打印 普通 Pizza 列表
+        for i, item in enumerate(regular_pizzas):
+            # 初始化当前的id列表
+
             # 当前Pizza 所在的行和列计算
             r = int(i/self.cc)
             c = i % self.cc
             # 先画一个大框
-            self.veg = Canvas(self.frame, bg=self.cbg, width=self.cwidth, height=self.cheight, highlightthickness=1)
+            self.veg = Canvas(
+                self.frame,
+                bg='snow',
+                width=self.cwidth,
+                height=self.cheight,
+                highlightthickness=1
+            )
             self.veg.grid(row=r, column=c)
-            self.veg.create_rectangle(1, 1, PIZZAS['width'], PIZZAS['height'], outline=self.rec_color, width=1)
-            
+            # 绘制灰色边框
+            self.veg.create_rectangle(
+                1, 1,
+                self.cwidth,
+                self.cheight,
+                outline='snow4',
+                width=1
+            )
+
             # Pizza 的名称
-            self.veg.create_text(161, 29, font=self.nfont,
-                                fill=self.ncolor, text=pizza['name'])
+            self.veg.create_text(
+                160, 20,
+                font=("Helvetica 15 normal"),
+                fill='Dodgerblue2',
+                text=item['name']
+            )
+
             # Pizza 的图片
-            self.imgs.append(ImageTk.PhotoImage(Image.open(pizza['img'])))
-            self.veg.create_image(162, 172, image=self.imgs[i])
-            
+            self.imgs.append(ImageTk.PhotoImage(Image.open(item['img'])))
+            self.veg.create_image(160, 160, image=self.imgs[i])
+
             # Pizza 的描述
-            self.veg.create_text(160, 322, justify=CENTER, anchor=CENTER, font=self.dfont, fill=self.dcolor,text=pizza['content'])
+            self.veg.create_text(
+                160, 295,
+                justify=CENTER,
+                anchor=CENTER,
+                font=("Helvetica 10 normal"),
+                fill='dim gray',
+                text=item['content']
+            )
             self.l.append(self.veg)
 
-            self.veg2 = Canvas(self.veg, bg=self.cbg2, highlightthickness=1)
-            self.veg2.place(x=2, y=341, width=self.cwidth-3, height=88)
+            # 画一个红色方框
+            self.veg2 = Canvas(
+                self.veg, 
+                bg='firebrick1', 
+                highlightthickness=1
+            )
+            self.veg2.place(
+                x=2, y=320,
+                width=self.cwidth-2,
+                height=80
+            )
+
             # 显示价格
-            self.veg2.create_text(155, 18, font=self.sizefont, fill=self.sizecolor,
-                                text=PIZZAS['Regular pizzas']['price'])
-            # 复选框
-            Checkbutton(self.veg2, 
-                        bg=self.cbg2, 
-                        relief=FLAT, 
-                        ).place(x=98, y=5)
+            self.veg2.create_text(
+                75, 40,
+                font=("Helvetica 32 bold"),
+                fill='snow',
+                text='{}{}'.format(money, item['price'])
+            )
+
+            # 左侧的减号：点击后数量-1
+            self.minus = Button(
+                self.veg2,
+                bg=color['warning'],
+                relief=FLAT,
+                fg='white',
+                text='-',
+                font=("Sans 12 bold")
+            )
+            self.minus.place(x=150, y=10, width=20, height=20)
+            self.minus.bind(
+                "<Button-1>",
+                partial(self.minus_pizza, self.minus, item['id'])
+            )
+
+            # 数量，默认为0，单份不超过5个，总数也不能超过5个
+            self.amount = Entry(
+                self.veg2,
+                bg='azure',
+                textvariable=self.user_cart.get(item['id']),
+                relief=FLAT,
+                justify='center'
+            )
+            self.amount.place(x=175, y=10, width=75, height=20)
+            # self.carts[item['id']] = self.amount
+            # 购物车商品默认为0
+
+            # 右侧的加号：点击后数量+1
+            self.plus = Button(
+                self.veg2,
+                bg=color['warning'],
+                fg='white',
+                relief=FLAT,
+                text='+',
+                font=("Sans 12 bold"))
+            self.plus.bind(
+                "<Button-1>", partial(self.plus_pizza, self.plus, item['id']))
+            self.plus.place(x=255, y=10, width=20, height=20)
+
             # 加入购物车
-            self.label1 = Label(self.veg2, 
-                                bg=COLOR['WARNING'], 
-                                fg='white',
-                                text='ADD TO CART', 
-                                font=("Sans 12 bold"))
-            self.label1.bind("<Button-1>", lambda val=pizza['id']: self.func(pizza['id']))
-            self.label1.place(x=94, y=40, width=110, height=30)
-            self.__labels__.append(self.label1)
-            self.veg2.create_oval(
-                77, 33, 220, 76, fill=COLOR['WARNING'], outline=COLOR['WARNING'], width=0)
+            self.cartBtn = Button(
+                self.veg2,
+                bg=color['warning'],
+                relief=FLAT,
+                fg='white',
+                text='ADD TO CART',
+                font=("Helvetica 11 bold")
+            )
+            self.cartBtn.bind(
+                '<Button-1>', 
+                partial(self.add_to_cart, self.cartBtn, item['id'])
+            )
+            self.cartBtn.place(x=150, y=40, width=127, height=30)
+            # self.__labels__.append(self.label1)
+            # self.veg2.create_oval(
+            #     77, 33, 220, 76, fill=color['warning'], outline=color['warning'], width=0)
 
             # self.R1.set(self.dict['1'][1]['R'])
 
@@ -765,250 +873,405 @@ class Main:
         #         self.__labels__[int(d)].config(
         #             text='REMOVE', fg='SpringGreen2')
 
-        
+    def minus_pizza(self, minus, id, event):
+        ''' 购物车数量+1 '''
+        # 购物车原来就有的个数
+        n = int(self.user_cart[id].get())
+        print('点击加入购物车', id, n, 1)
+        tt = n - 1 if n >= 1 else 0
+        print(tt)
+        self.user_cart[id].set(tt)
+        self.update_cart(id)
+
+    def plus_pizza(self, plus, id, event):
+        ''' 购物车数量+1 '''
+        # 购物车原来就有的个数
+        n = int(self.user_cart[id].get())
+        print('点击加入购物车', id, n, 1)
+        tt = n + 1 if n <= int(max_cart_item)-1 else int(max_cart_item)
+        self.user_cart[id].set(tt)
+        self.update_cart(id)
+
+
+    def add_to_cart(self, cartBtn, id, event):
+        ''' 加入购物车 '''
+        # 获取当前id 的 Pizza 在购物车里有多少件
+        num = int(self.user_cart.get(id).get())
+        print('点击加入购物车', id, num)
+        if num == 0:
+            num = 1
+        self.user_cart[id].set(num)
+        self.update_cart(id)
+
+
+    def update_cart(self, id):
+        '''更新购物车中当前 Pizza 的数量'''
+        # 获取当前购物车中Pizza的个数及总价
+        self.ITEMS = sum([int(self.user_cart.get(c).get())
+                          for c in self.user_cart])
+        self.TOTAL = sum([int(self.user_cart.get(
+            c).get()) * self.get_pizza('id', id)[0]['price'] for c in self.user_cart])
+        self.tl2.config(text=str(self.ITEMS))
+        self.tl.config(text='{}{}{}'.format(
+            'TOTAL=', money, self.TOTAL))  # total amount
+
+
     def show_gourmet_pizzas(self):
         ''' 点击进入精品 Pizza '''
         self.flush()
         self.create_header()
 
-        # specifications of a 'CANVAS'
-        self.cwidth = PIZZAS['width']+1  # canvas width
-        self.cheight = PIZZAS['height']+1  # canvas height
-
-        self.cbg = 'snow'  # canvas bg color
-        self.ncolor = 'Dodgerblue2'  # name color
-        self.nfont = ("Helvetica 15 normal")  # name font description
-        self.dcolor = 'dim gray'  # desciption color
-        self.dfont = ("Helvetica 10 normal")  # descr. font description
-        self.sizecolor = 'snow'
-        self.sizefont = ("Helvetica 12 normal")
-        self.rec_color = 'snow4'
-        self.cbg2 = 'firebrick1'
+        gourmet_pizzas = [p for p in pizzas if p['type'] == 'gourmet']
 
         mh = 250           # 定义精品 pizza 的高度
-        hh = mh * (len(PIZZAS['Gourmet pizzas']['list'])+1)
+        hh = mh * (len(gourmet_pizzas)+1)
 
-        self.frame.config(width=WIDTH-15, height=hh)
-        self.canva = Canvas(self.frame, bd=-2, bg='white',
-                            width=WIDTH-15, height=hh, highlightthickness=1)
+        self.frame.config(width=WIDTH-40, height=hh)
+        self.canva = Canvas(
+            self.frame, bd=-2, bg='white',
+            width=WIDTH-40, 
+            height=hh, 
+            highlightthickness=1
+        )
 
         self.canva.place(x=0, y=0)
         self.imgs = []
         self.ms = []
         # meal 1 ##
         # 显示精品 pizza 图片
-        # item = PIZZAS['Gourmet pizzas']['list'][0]
+        # item = pizzas['gourmet']['list'][0]
 
-        for i,item in enumerate(PIZZAS['Gourmet pizzas']['list']):
+        for i, item in enumerate(gourmet_pizzas):
             # 显示Pizza图片
-            self.imgs.append(ImageTk.PhotoImage(Image.open(item['img'])))  
+            self.imgs.append(ImageTk.PhotoImage(Image.open(item['img'])))
             self.canva.create_image(300, 200+i*mh, image=self.imgs[i])
-            
-            # 显示精品 Pizza 的名称及介绍
-            Label(self.canva, 
-                    text=item['name'], 
-                    font=('Sans 18 bold'), 
-                    justify='left',
-                    bg='white').place(x=600, y=84+i*mh)
 
-            Label(self.canva, 
-                text=item['content'], 
+            # 显示精品 Pizza 的名称及介绍
+            Label(
+                self.canva,
+                text=item['name'],
+                font=('Sans 18 bold'),
                 justify='left',
-                anchor = 'nw',
+                bg='white'
+            ).place(x=600, y=84+i*mh)
+
+            Label(
+                self.canva,
+                text=item['content'],
+                justify='left',
+                anchor='nw',
                 font=('Helvetica 12 normal'),
-                bg='white').place(x=600, y=110+i*mh, width=400, height=100)
-            
+                bg='white'
+            ).place(x=600, y=110+i*mh, width=400, height=100)
+
             # self.canva.create_polygon(190, 260, 390, 260, 420, 300, 220, 300, fill='firebrick2', width=2)
             # 加入购物车
-            self.ms.append(Label(self.canva, text='ADD TO CART',
-                            bg='firebrick2', fg='gold', font=('Sans 15 bold')))
+
+            Label(
+                self.canva, 
+                text='{}{}'.format(money,item['price']), 
+                font=('Helvetica 18 bold'), 
+                bg='orange2',
+                fg='white'
+            ).place(x=600, y=200+i*mh, width=50, height=35)
+
+             # 左侧的减号：点击后数量-1
+            minus = Button(
+                self.canva,
+                bg=color['warning'],
+                relief=FLAT,
+                fg='white',
+                text='-',
+                font=("Sans 12 bold")
+            )
+            minus.place(x=50+750, y=200+i*mh, width=20, height=20)
+            minus.bind(
+                "<Button-1>",
+                partial(self.minus_pizza, minus, item['id'])
+            )
+
+            # 数量，默认为0，单份不超过5个，总数也不能超过5个
+            amount = Entry(
+                self.canva,
+                bg='azure',
+                bd=2,
+                textvariable=self.user_cart.get(item['id']),
+                relief=FLAT,
+                justify='center'
+            )
+            amount.place(x=75+750, y=200+i*mh, width=75, height=20)
+            # self.carts[item['id']] = self.amount
+            # 购物车商品默认为0
+
+            # 右侧的加号：点击后数量+1
+            plus = Button(
+                self.canva,
+                bg=color['warning'],
+                fg='white',
+                relief=FLAT,
+                text='+',
+                font=("Sans 12 bold"))
+            plus.bind(
+                "<Button-1>", partial(self.plus_pizza, plus, item['id']))
+            plus.place(x=155+750, y=200+i*mh, width=20, height=20)
+
+            # 加入购物车
+            self.ms.append(
+                Label(
+                    self.canva, 
+                    text='ADD TO CART',
+                    bg='firebrick2', 
+                    fg='snow', 
+                    font=('Sans 15 bold')
+                )
+            )
             self.ms[i].place(x=800, y=264+i*mh, width=160, height=33)
-            self.ms[i].bind('<Button-1>', lambda val=item['id'],
-                            price=PIZZAS['Gourmet pizzas']['price']: self.meals_func(item['id'], price))
+            self.ms[i].bind(
+                '<Button-1>', 
+                partial(self.add_to_cart, self.ms[i], item['id'])
+            )
 
-            Label(self.canva, text=PIZZAS['Gourmet pizzas']['price'], font=('Helvetica 18 bold'), bg='orange2',
-                    fg='white').place(x=800, y=200+i*mh, width=50, height=35)
-
-        
-
+            
 
         # for m in self.M:
         #     if self.M[m][0] == True:  # previously selected meal
         #         self.__labels3__[int(m)].config(
         #             text='REMOVE', bg='firebrick2', fg='black')
 
+    def payment_window(self, val, event):  # Payment window
 
-    def payment_window(self, val):  # Payment window       #####
-        if(self.P['R'] == 0 and self.P['M'] == 0 and self.P['L'] == 0):
-            messagebox.showinfo("No pizzas selected.",
-                                "Please make an order to continue")
-        else:
-            self.flush()
-            self.create_header()
-            # self.f.place(x=0,y=0)
-            self.frame.config(width=1336, height=1410,
-                              bg='white')  # prev height=1200
-            self.canva = Canvas(self.frame, bd=-2, bg='white',
-                                width=1336, height=1410, highlightthickness=1)  # 1000
-            self.canva.place(x=0, y=0)
+        self.flush()
+        self.create_header()
+        # self.f.place(x=0, y=0)
+        self.frame.config(
+            width=WIDTH-30, 
+            height=HEIGHT,
+            bg='white'
+        )
+        self.canva = Canvas(
+            self.frame, 
+            bd=-2, 
+            bg='white',
+            width=WIDTH-30, 
+            height=HEIGHT, 
+            highlightthickness=1
+        )  # 1000
+        self.canva.place(x=0, y=0)
 
-            Label(self.frame, text='PLEASE CHECK THE FOLLOWING DETAILS\n TO COMPLETE YOUR ORDER', font=(
-                'Helvetica 11 bold'), bg='white', fg='grey19').place(x=30, y=50)
-            e = Entry(self.frame, bg='gray99')  # NAME   ##
-            e.insert(0, self.NAME)
-            e.place(x=55, y=105, width=250, height=28)
-            e = Entry(self.frame, bg='gray99')  # EMAIL   ##
-            e.insert(0, self.MAIL)
-            e.place(x=55, y=145, width=250, height=28)
-            e = Entry(self.frame, bg='gray99')  # PHONE NO   ##
-            e.insert(0, 'Phone No*')
-            e.place(x=55, y=185, width=250, height=28)
-            self.canva.create_rectangle(
-                14, 38, 365, 245, width=2, outline='deep sky blue')  # rectangle  ##
+        # 下单人信息
+        Label(
+            self.frame, 
+            text='PLEASE CHECK THE FOLLOWING DETAILS\n TO COMPLETE YOUR ORDER', 
+            font=('Helvetica 11 bold'), 
+            bg='white', 
+            fg='grey19'
+        ).place(x=30, y=50)
 
-            Label(self.frame, text='YOUR DELIVERY ADDRESS', font=(
-                'Helvetica 11 bold'), bg='white', fg='grey19').place(x=530, y=50)
-            Label(self.frame, text='House No', bg='white').place(x=460, y=105)
-            Label(self.frame, text='Street/Society ',
-                  bg='white').place(x=460, y=145)
-            Label(self.frame, text='City', bg='white').place(x=460, y=185)
+        e = Entry(self.frame, bg='gray99')  # NAME   ##
+        e.insert(0, self.NAME)
+        e.place(x=55, y=105, width=250, height=28)
+        e = Entry(self.frame, bg='gray99')  # Email   ##
+        e.insert(0, self.mail)
+        e.place(x=55, y=145, width=250, height=28)
+        e = Entry(self.frame, bg='gray99')  # PHONE NO   ##
+        e.insert(0, 'Phone No*')
+        e.place(x=55, y=185, width=250, height=28)
+        self.canva.create_rectangle(
+            14, 38, 365, 245, width=2, outline='deep sky blue')  # rectangle  ##
+        
+        # 接收地址
+        Label(self.frame, text='YOUR DELIVERY ADDRESS', font=(
+            'Helvetica 11 bold'), bg='white', fg='grey19').place(x=530, y=50)
+        Label(self.frame, text='House No', bg='white').place(x=460, y=105)
+        Label(self.frame, text='Street/Society ',
+              bg='white').place(x=460, y=145)
+        Label(self.frame, text='City', bg='white').place(x=460, y=185)
 
-            self.he = Entry(self.frame, bg='gray99')  # HOUSE Entry field   ##
-            self.he.place(x=550, y=105, width=210, height=28)
-            # SOCIETY Entry field   ##
-            self.se = Entry(self.frame, bg='gray99')
-            self.se.place(x=550, y=145, width=210, height=28)
-            self.ce = Entry(self.frame, bg='gray99')  # CITY Entry field   ##
-            self.ce.place(x=550, y=185, width=210, height=28)
-            self.canva.create_rectangle(
-                14+435, 43, 360+440+25, 245, width=2, outline='deep sky blue')  # rectangle  ##
+        self.he = Entry(self.frame, bg='gray99')  # HOUSE Entry field   ##
+        self.he.place(x=550, y=105, width=210, height=28)
+        # SOCIETY Entry field   ##
+        self.se = Entry(self.frame, bg='gray99')
+        self.se.place(x=550, y=145, width=210, height=28)
+        self.ce = Entry(self.frame, bg='gray99')  # CITY Entry field   ##
+        self.ce.place(x=550, y=185, width=210, height=28)
+        self.canva.create_rectangle(
+            14+435, 43, 360+440+25, 245, width=2, outline='deep sky blue')  # rectangle  ##
 
-            # self.loc = PhotoImage(file='img/loc.png')
-            # self.loc_logo = Label(self.canva, image=self.loc, bg='white')
-            # self.loc_logo.place(x=772, y=177, width=37, height=42)
-            # self.loc_logo.bind(
-            #     '<Button-1>', lambda val='1': self.detect_loc('1'))
-            # self.dl = Label(self.canva, text='Detect City')
-            # self.dl.place(x=760, y=220)
-            # self.dl.bind('<Button-1>', lambda val='1': self.detect_loc('1'))
+        # 订单资料
+        Label(self.frame, text='ORDER DETAILS', font=(
+            'Helvetica 11 bold'), bg='white', fg='grey19').place(x=1020, y=50)
+        Label(self.frame, text='Net Price', bg='white').place(
+            x=936, y=110)  # TOTAL LABEL
+        Label(self.frame, text='\u0024 '+str(self.TOTAL),
+              bg='white').place(x=1084, y=110)
+        Label(self.frame, text='GST', bg='white').place(
+            x=936, y=150)  # GST LABEL
+        Label(self.frame, text='\u0024 '+str(math.ceil(0.18 *
+                                                       self.TOTAL)), bg='white').place(x=1084, y=150)
+        Label(self.frame, text='TOTAL', bg='turquoise1', font=(
+            'bold 10')).place(x=936, y=190)  # TOTAL LABEL
+        Label(self.frame, text=str(math.ceil(0.18*self.TOTAL)+self.TOTAL),
+              bg='white', font=('bold 10')).place(x=1084, y=190)
+        self.canva.create_rectangle(
+            894, 38, 1275, 245, width=2, outline='deep sky blue')  # rectangle  ##
 
-            Label(self.frame, text='ORDER DETAILS', font=(
-                'Helvetica 11 bold'), bg='white', fg='grey19').place(x=1020, y=50)
-            Label(self.frame, text='Net Price', bg='white').place(
-                x=936, y=110)  # TOTAL LABEL
-            Label(self.frame, text='\u0024 '+str(self.TOTAL),
-                  bg='white').place(x=1084, y=110)
-            Label(self.frame, text='GST', bg='white').place(
-                x=936, y=150)  # GST LABEL
-            Label(self.frame, text='\u0024 '+str(math.ceil(0.18 *
-                                                           self.TOTAL)), bg='white').place(x=1084, y=150)
-            Label(self.frame, text='TOTAL', bg='turquoise1', font=(
-                'bold 10')).place(x=936, y=190)  # TOTAL LABEL
-            Label(self.frame, text=str(math.ceil(0.18*self.TOTAL)+self.TOTAL),
-                  bg='white', font=('bold 10')).place(x=1084, y=190)
-            self.canva.create_rectangle(
-                894, 38, 1275, 245, width=2, outline='deep sky blue')  # rectangle  ##
+        self.canva.create_rectangle(
+            50, 288, 900, 358, fill='brown3', outline='white', width=2)
+        Label(self.canva, text='YOUR CART DETAILS', font=('Sans 21 bold'),
+              fg='snow', bg='brown3').place(x=60, y=295, width=300, height=55)
+        # 订单详情的表头：名称，数量，总价   
+        Label(
+            self.canva, 
+            text='Item', 
+            font=('Sans 17 bold'),
+            fg='gray53', bg='white'
+        ).place(x=100, y=370)
 
-            self.canva.create_rectangle(
-                50, 288, 900, 358, fill='brown3', outline='white', width=2)
-            Label(self.canva, text='YOUR CART DETAILS', font=('Sans 21 bold'),
-                  fg='snow', bg='brown3').place(x=60, y=295, width=300, height=55)
-            Label(self.canva, text='Item', font=('Sans 17 bold'),
-                  fg='gray53', bg='white').place(x=180, y=370)
-            Label(self.canva, text='Price', font=('Sans 17 bold'),
-                  fg='gray53', bg='white').place(x=760, y=370)
+        Label(
+            self.canva, 
+            text='Type', 
+            font=('Sans 17 bold'),
+            fg='gray53', 
+            bg='white'
+        ).place(x=500, y=370)
 
-            i = 0  # first check for PIZZAS ################
-            self.pizza_logo2 = PhotoImage(file='img/pizza_logo2.png')
-            self.drinks_logo2 = PhotoImage(file='img/drinks_logo2.png')
-            self.meals_logo2 = ImageTk.PhotoImage(
-                Image.open('img/meals_logo2.jpg'))
-            for p in self.dict:
-                if self.dict[p][1]['R'] == 1 or self.dict[p][1]['M'] == 1 or self.dict[p][1]['L'] == 1:
-                    size = ''
-                    price = 0
-                    if self.dict[p][1]['R'] == 1:
-                        size += ' R'
-                        price += 205
-                    if self.dict[p][1]['M'] == 1:
-                        size += ' M'
-                        price += 385
-                    if self.dict[p][1]['L'] == 1:
-                        size += ' L'
-                        price += 595
-                    self.canva.create_oval(
-                        50, 430+60*i, 82, 466+60*i, fill='brown3', outline='gold', width=4)
-                    if i >= 9:
-                        Label(self.canva, text=str(i+1), bg='brown3', fg='snow',
-                              font=('Sans 10 bold')).place(x=56, y=437+60*i)
-                    else:
-                        Label(self.canva, text=str(i+1), bg='brown3', fg='snow',
-                              font=('Sans 10 bold')).place(x=60, y=437+60*i)
-                    Label(self.canva, text=self.dict[p][0], font=(
-                        'Sans 15 bold'), bg='white', fg='gray4').place(x=100, y=430+60*i)  # name
-                    self.canva.create_image(
-                        450, 440+60*i, image=self.pizza_logo2)  # logo ####
-                    Label(self.canva, text=size, font=('Helvetica 11 bold italic')).place(
-                        x=550, y=432+60*i)  # size ##
-                    Label(self.canva, text='\u0024 '+str(price),
-                          font=('Times 15 bold'), bg='white').place(x=766, y=430+60*i)
-                    i += 1
+        Label(
+            self.canva, 
+            text='Amount', 
+            font=('Sans 17 bold'),
+            fg='gray53', 
+            bg='white'
+        ).place(x=650, y=370)
 
-            for d in self.D:  # drinks #################
-                if self.D[d][0] == True:
-                    self.canva.create_oval(
-                        50, 430+60*i, 82, 466+60*i, fill='brown3', outline='gold', width=4)
-                    if i >= 9:
-                        Label(self.canva, text=str(i+1), bg='brown3', fg='snow',
-                              font=('Sans 10 bold')).place(x=56, y=437+60*i)
-                    else:
-                        Label(self.canva, text=str(i+1), bg='brown3', fg='snow',
-                              font=('Sans 10 bold')).place(x=60, y=437+60*i)
-                    Label(self.canva, text=self.D[d][1], font=(
-                        'Sans 15 bold'), bg='white', fg='gray4').place(x=100, y=430+60*i)  # name
-                    self.canva.create_image(
-                        450, 440+60*i, image=self.drinks_logo2)  # logo ####
-                    Label(self.canva, text='\u0024 '+str(self.D[d][2]), font=(
-                        'Times 15 bold'), bg='white').place(x=766, y=430+60*i)
-                    i += 1
+        Label(
+            self.canva, 
+            text='Price', 
+            font=('Sans 17 bold'),
+            fg='gray53', 
+            bg='white'
+        ).place(x=760, y=370)
 
-            for m in self.M:  # meals ##############
-                if self.M[m][0] == True:
-                    self.canva.create_oval(
-                        50, 430+60*i, 82, 466+60*i, fill='brown3', outline='gold', width=4)
-                    if i >= 9:
-                        Label(self.canva, text=str(i+1), bg='brown3', fg='snow',
-                              font=('Sans 10 bold')).place(x=56, y=437+60*i)
-                    else:
-                        Label(self.canva, text=str(i+1), bg='brown3', fg='snow',
-                              font=('Sans 10 bold')).place(x=60, y=437+60*i)
-                    Label(self.canva, text=self.M[m][1], font=(
-                        'Sans 15 bold'), bg='white', fg='gray4').place(x=100, y=430+60*i)  # name
-                    self.canva.create_image(
-                        450, 440+60*i, image=self.meals_logo2)  # logo ####
-                    Label(self.canva, text='\u0024 '+str(self.M[m][2]), font=(
-                        'Times 15 bold'), bg='white').place(x=766, y=430+60*i)
-                    i += 1
+        user_carts = {c:self.user_cart[c] for c in self.user_cart if int(self.user_cart[c].get()) > 0}
 
-            Label(self.canva, text='TOTAL', font=('Sans 17 bold'),
-                  bg='white', fg='gray2').place(x=100, y=430+60*i)
-            Label(self.canva, text='\u0024 '+str(self.TOTAL), font=('Sans 17 bold'),
-                  bg='white', fg='gray2').place(x=760, y=430+60*i)
 
-            self.po = Label(self.canva, text='Place Order',
-                            bg='firebrick3', fg='gold', font=('Sans 15 bold'))
-            self.po.bind('<Button-1>', lambda val='1': self.place_order('1'))
-            self.po.place(x=1100, y=400, width=130, height=40)
+
+
+
+
+        # first check for pizzas ################
+        # self.pizza_logo2 = PhotoImage(file='img/pizza_logo2.png')
+        # self.drinks_logo2 = PhotoImage(file='img/drinks_logo2.png')
+        # self.meals_logo2 = ImageTk.PhotoImage(
+        #     Image.open('img/meals_logo2.jpg'))
+        # 方案2： 以标签绘制
+        for i,c in enumerate(user_carts): 
+            amount = int(self.user_cart[c].get())
+            print('当前id={}数量为{}'.format(c,amount))
+            item = self.get_pizza('id', c)[0]
+            # 订单名称
+            Label(
+                self.canva, 
+                text=item['name'], 
+                font=('Sans 15 bold'), 
+                bg='white', 
+                fg='gray4'
+            ).place(x=100, y=430+60*i) 
+
+            # 类型
+            Label(
+                self.canva, 
+                text=item['type'], 
+                font=('Helvetica 11 bold italic')
+            ).place(x=500, y=432+60*i)
+        
+            # 数量
+            Label(
+                self.canva, 
+                text=amount, 
+                font=('Helvetica 11 bold italic')
+            ).place(x=650, y=432+60*i)
+
+            # 单项总价
+            Label(
+                self.canva, 
+                text='{}{}'.format(money, item['price']*amount),
+                font=('Times 15 bold'), 
+                bg='white'
+            ).place(x=766, y=430+60*i)
+
+
+        # 合计总价
+        Label(
+            self.canva, 
+            text='TOTAL', 
+            font=('Sans 17 bold'),
+            bg='white', 
+            fg='gray2'
+        ).place(x=100, y=430+60*(i+1))
+
+        Label(
+            self.canva, 
+            text='{}{}'.format(money,self.TOTAL), 
+            font=('Sans 17 bold'),
+            bg='white', 
+            fg='gray2'
+        ).place(x=760, y=430+60*(i+1))
+
+        # 下单
+        self.po = Label(
+            self.canva, 
+            text='Place Order',
+            bg='firebrick3', 
+            fg='gold', 
+            font=('Sans 15 bold')
+        )
+        self.po.bind(
+            '<Button-1>', 
+            lambda val='1': self.place_order('1')
+        )
+        self.po.place(x=1100, y=400, width=130, height=40)
 
 
     def place_order(self, val):
         if not len(self.he.get()) or not len(self.se.get()) or not len(self.ce.get()):
             messagebox.showinfo(
                 'Missing Details', 'Please provide address details for successelful delivery of your order.')
-            self.payment_window('1')
+            # self.payment_window('1')
         else:
-            messagebox.showinfo('Order placed', 'Dear '+self.NAME+' ,your order has been successelfully placed.\nIt will be delivered to ' +
-                                self.he.get()+','+self.se.get()+','+self.ce.get()+' in under an hour.\nThank you !')
+            messagebox.showinfo('Order placed', 'Dear '+self.NAME+' ,your order has been successelfully placed.\nIt will be delivered to ' + self.he.get()+','+self.se.get()+','+self.ce.get()+' in under an hour.\nThank you !')
+
+    def orders(self):
+        ''' 查看所有订单信息 '''
+
+    
+    def show_order(self):
+        ''' 查看订单的具体信息 '''
+
+        # 方案1： 以表格绘制
+        columns = ['Item', 'Type', 'Amount', 'Price']
+        treeview = ttk.Treeview(self.canva, height=18, show="headings", columns=columns)  # 表格
+
+        treeview.place(x=100, y=430)
+
+        treeview.column('Item', width=300, anchor='w')
+        treeview.column('Type', width=200, anchor='center')
+        treeview.column('Amount', width=100, anchor='center')
+        treeview.column('Price', width=100, anchor='center')
+
+        for cc in columns:
+            treeview.heading(cc, text=cc)
+
+        treeview.pack(side=LEFT, fill=BOTH)
+        for i, c in enumerate(user_carts):
+            item = self.get_pizza('id', c)[0]
+            amount = int(self.user_cart[c].get())
+            price = amount * item['price']
+            treeview.insert('', i, values=(item['name'], item['type'], amount, price))
+        # 显示总价 
+        treeview.insert('', i+1, values=('Total', '', self.ITEMS, self.TOTAL))
+
+
+
 
 x = Main()
 del(s)
