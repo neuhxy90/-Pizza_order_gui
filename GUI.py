@@ -1384,13 +1384,13 @@ class Main:
 
     def place_order(self, val):
         ''' 点击下单 '''
+
+        house_no = self.he.get()
+        street = self.se.get()
+        city = self.ce.get()
+        total = self.TOTAL + delivery_fee
+
         if not len(self.he.get()) or not len(self.se.get()) or not len(self.ce.get()):
-
-            house_no = self.he.get()
-            street = self.se.get()
-            city = self.ce.get()
-            total = self.TOTAL + delivery_fee
-
             messagebox.showinfo(
                 'Missing Details', 'Please provide address details for successelful delivery of your order.')
             # self.payment_window('1')
@@ -1431,11 +1431,10 @@ class Main:
         i = 0
         treeview.pack(side=LEFT, fill=BOTH)
         for i, c in enumerate(orders):
-            item = self.get_pizza('id', c)[0]
-            amount = int(self.user_cart[c].get())
-            price = amount * item.price
-            treeview.insert('', i, values=(
-                item.name, item.type, amount, price))
+            treeview.insert(
+                '', i, 
+                values=(c.id, '{}...'.format(c.items[0].pizza.name), len(c.items), c.total)
+            )
         # 显示总价
         treeview.insert('', i+1, values=('Total', '', self.ITEMS, self.TOTAL))
 
